@@ -1,0 +1,12 @@
+.app {
+  flex: 1;
+  padding: 2rem;
+  gap: 2rem;
+}
+
+.title {
+  font-size: 2rem;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+} 

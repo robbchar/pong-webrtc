@@ -1,0 +1,51 @@
+/* Modern CSS Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img, picture, video, canvas, svg {
+  display: block;
+  max-width: 100%;
+}
+
+input, button, textarea, select {
+  font: inherit;
+}
+
+/* Global Styles */
+:root {
+  --primary-color: #ffffff;
+  --background-color: #000000;
+  --accent-color: #888888;
+  --game-width: 800px;
+  --game-height: 600px;
+  --paddle-width: 20px;
+  --paddle-height: 100px;
+  --ball-size: 20px;
+}
+
+body {
+  font-family: 'Press Start 2P', system-ui, -apple-system, sans-serif;
+  background-color: var(--background-color);
+  color: var(--primary-color);
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+} 
