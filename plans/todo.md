@@ -36,11 +36,11 @@
 - [x] Create device orientation detection for mobile
 
 ## Phase 3: Game Physics and Logic
-- [ ] Implement ball movement logic
-  - [ ] Basic movement with velocity
-  - [ ] Wall collision detection
-  - [ ] Paddle collision detection
-  - [ ] Scoring when ball passes paddle
+- [x] Implement ball movement logic
+  - [x] Basic movement with velocity
+  - [x] Wall collision detection
+  - [x] Paddle collision detection
+  - [x] Scoring when ball passes paddle
 - [ ] Implement paddle movement
   - [ ] Mouse/touch input handling
   - [ ] Smooth transition to target position
