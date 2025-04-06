@@ -69,7 +69,7 @@ const gameSlice = createSlice({
         state.score.right += action.payload.points;
       }
     },
-    resetGame: (state) => {
+    resetGame: () => {
       return initialState;
     },
   },

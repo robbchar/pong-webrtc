@@ -23,14 +23,18 @@ const createTestStore = (initialState = {}) => {
   });
 };
 
-describe('GameBoard', () => {
-  it('renders game board with correct elements', () => {
-    const store = createTestStore();
+const renderGameBoard = (initialState = {}) => {
+  const store = createTestStore(initialState);
     render(
       <Provider store={store}>
         <GameBoard />
       </Provider>
     );
+  }
+
+describe('GameBoard', () => {
+  it('renders game board with correct elements', () => {
+    renderGameBoard();
 
     expect(screen.getByTestId('game-board')).toBeInTheDocument();
     expect(screen.getByTestId('center-line')).toBeInTheDocument();
@@ -40,12 +44,7 @@ describe('GameBoard', () => {
   });
 
   it('applies portrait styles when in portrait orientation', () => {
-    const store = createTestStore();
-    render(
-      <Provider store={store}>
-        <GameBoard />
-      </Provider>
-    );
+    renderGameBoard();
 
     const gameBoard = screen.getByTestId('game-board');
     expect(gameBoard).toHaveClass(styles.portrait);
@@ -59,19 +58,14 @@ describe('GameBoard', () => {
       angle: 0,
     });
 
-    const store = createTestStore();
-    render(
-      <Provider store={store}>
-        <GameBoard />
-      </Provider>
-    );
+    renderGameBoard();
 
     const gameBoard = screen.getByTestId('game-board');
     expect(gameBoard).toHaveClass(styles.landscape);
   });
 
   it('shows ready button in waiting state', () => {
-    const store = createTestStore({
+    renderGameBoard({
       game: {
         status: 'waiting',
         ball: { x: 50, y: 50, velocityX: 0, velocityY: 0 },
@@ -80,16 +74,11 @@ describe('GameBoard', () => {
         score: { left: 0, right: 0 },
       },
     });
-    render(
-      <Provider store={store}>
-        <GameBoard />
-      </Provider>
-    );
     expect(screen.getByText('READY')).toBeInTheDocument();
   });
 
   it('shows countdown in countdown state', () => {
-    const store = createTestStore({
+    renderGameBoard({
       game: {
         status: 'countdown',
         ball: { x: 50, y: 50, velocityX: 0, velocityY: 0 },
@@ -98,16 +87,11 @@ describe('GameBoard', () => {
         score: { left: 0, right: 0 },
       },
     });
-    render(
-      <Provider store={store}>
-        <GameBoard />
-      </Provider>
-    );
     expect(screen.getByTestId('countdown')).toBeInTheDocument();
   });
 
   it('shows game over in game over state', () => {
-    const store = createTestStore({
+    renderGameBoard({
       game: {
         status: 'gameOver',
         ball: { x: 50, y: 50, velocityX: 0, velocityY: 0 },
@@ -116,11 +100,6 @@ describe('GameBoard', () => {
         score: { left: 0, right: 0 },
       },
     });
-    render(
-      <Provider store={store}>
-        <GameBoard />
-      </Provider>
-    );
     expect(screen.getByTestId('game-over')).toBeInTheDocument();
   });
 }); 
