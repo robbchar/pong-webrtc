@@ -1,39 +1,39 @@
 # Pong WebRTC Game - Development Todo List
 
 ## Phase 1: Project Setup
-- [ ] Create React app with `create-react-app pong-webrtc`
-- [ ] Install dependencies:
-  - [ ] `redux` and `@reduxjs/toolkit`
-  - [ ] `react-redux`
-  - [ ] `express` and `ws` (for signaling server)
-  - [ ] `jest` and `@testing-library/react`
-- [ ] Set up project structure
-  - [ ] Create component folders
-  - [ ] Set up Redux store structure
-  - [ ] Create initial CSS files
-- [ ] Create basic signaling server
-  - [ ] Set up Express server
-  - [ ] Add WebSocket support
-  - [ ] Implement basic error handling
+- [x] Create React app with `create-react-app pong-webrtc`
+- [x] Install dependencies:
+  - [x] `redux` and `@reduxjs/toolkit`
+  - [x] `react-redux`
+  - [x] `express` and `ws` (for signaling server)
+  - [x] `jest` and `@testing-library/react`
+- [x] Set up project structure
+  - [x] Create component folders
+  - [x] Set up Redux store structure
+  - [x] Create initial CSS files
+- [x] Create basic signaling server
+  - [x] Set up Express server
+  - [x] Add WebSocket support
+  - [x] Implement basic error handling
 
 ## Phase 2: Core Game Components
-- [ ] Create basic game components
-  - [ ] Game container
-  - [ ] Scoreboard
-  - [ ] Game board
-  - [ ] Paddles
-  - [ ] Ball
-- [ ] Implement Redux store
-  - [ ] Create game slice
-  - [ ] Create player slice
-  - [ ] Create connection slice
-  - [ ] Configure store with middleware
-- [ ] Implement game styling
-  - [ ] Retro black and white aesthetic
-  - [ ] Paddle and ball styling
-  - [ ] Scoreboard layout
-  - [ ] Center line styling
-- [ ] Create device orientation detection for mobile
+- [x] Create basic game components
+  - [x] Game container
+  - [x] Scoreboard
+  - [x] Game board
+  - [x] Paddles
+  - [x] Ball
+- [x] Implement Redux store
+  - [x] Create game slice
+  - [x] Create player slice
+  - [x] Create connection slice
+  - [x] Configure store with middleware
+- [x] Implement game styling
+  - [x] Retro black and white aesthetic
+  - [x] Paddle and ball styling
+  - [x] Scoreboard layout
+  - [x] Center line styling
+- [x] Create device orientation detection for mobile
 
 ## Phase 3: Game Physics and Logic
 - [ ] Implement ball movement logic

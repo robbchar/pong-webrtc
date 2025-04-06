@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
@@ -6,20 +6,25 @@ import Paddle from './Paddle';
 import rootReducer from '../../store/rootReducer';
 import styles from './Paddle.module.css';
 
-const createTestStore = () => {
+const createTestStore = (initialState = {}) => {
   return configureStore({
     reducer: rootReducer,
+    preloadedState: initialState,
   });
+};
+
+const renderPaddle = (side: 'left' | 'right', position: number, store: ReturnType<typeof createTestStore> = createTestStore()) => {
+  const { rerender } = render(
+    <Provider store={store}>
+      <Paddle side={side} position={position} />
+    </Provider>
+  );
+  return { store, rerender };
 };
 
 describe('Paddle', () => {
   it('renders left paddle with correct position', () => {
-    const store = createTestStore();
-    render(
-      <Provider store={store}>
-        <Paddle side="left" position={50} />
-      </Provider>
-    );
+    renderPaddle('left', 50);
 
     const paddle = screen.getByTestId('left-paddle');
     expect(paddle).toBeInTheDocument();
@@ -29,12 +34,7 @@ describe('Paddle', () => {
   });
 
   it('renders right paddle with correct position', () => {
-    const store = createTestStore();
-    render(
-      <Provider store={store}>
-        <Paddle side="right" position={75} />
-      </Provider>
-    );
+    renderPaddle('right', 75);
 
     const paddle = screen.getByTestId('right-paddle');
     expect(paddle).toBeInTheDocument();
@@ -44,13 +44,7 @@ describe('Paddle', () => {
   });
 
   it('applies correct styles based on side prop', () => {
-    const store = createTestStore();
-    const { rerender } = render(
-      <Provider store={store}>
-        <Paddle side="left" position={50} />
-      </Provider>
-    );
-
+    const { store, rerender } = renderPaddle('left', 50);
     const leftPaddle = screen.getByTestId('left-paddle');
     expect(leftPaddle.className).toContain(styles.left);
 
@@ -65,13 +59,7 @@ describe('Paddle', () => {
   });
 
   it('updates position when position prop changes', () => {
-    const store = createTestStore();
-    const { rerender } = render(
-      <Provider store={store}>
-        <Paddle side="left" position={50} />
-      </Provider>
-    );
-
+    const { store, rerender } = renderPaddle('left', 50);
     const paddle = screen.getByTestId('left-paddle');
     expect(paddle).toHaveStyle({ top: '50%' });
 
@@ -85,50 +73,29 @@ describe('Paddle', () => {
   });
 
   it('handles mouse down event', () => {
-    const store = createTestStore();
-    render(
-      <Provider store={store}>
-        <Paddle side="left" position={50} />
-      </Provider>
-    );
-
+    const { store } = renderPaddle('left', 50);
     const paddle = screen.getByTestId('left-paddle');
     fireEvent.mouseDown(paddle, { clientY: 300 });
     
-    // The position should be updated in the store
     const state = store.getState();
     expect(state.game.leftPaddle.y).toBeDefined();
   });
 
   it('handles touch start event', () => {
-    const store = createTestStore();
-    render(
-      <Provider store={store}>
-        <Paddle side="left" position={50} />
-      </Provider>
-    );
-
+    const { store } = renderPaddle('left', 50);
     const paddle = screen.getByTestId('left-paddle');
     fireEvent.touchStart(paddle, { 
       touches: [{ clientY: 300 }] 
     });
     
-    // The position should be updated in the store
     const state = store.getState();
     expect(state.game.leftPaddle.y).toBeDefined();
   });
 
   it('maintains position within bounds', () => {
-    const store = createTestStore();
-    const { rerender } = render(
-      <Provider store={store}>
-        <Paddle side="left" position={50} />
-      </Provider>
-    );
-
+    const { store, rerender } = renderPaddle('left', 50);
     const paddle = screen.getByTestId('left-paddle');
     
-    // Test position above bounds
     rerender(
       <Provider store={store}>
         <Paddle side="left" position={-10} />
@@ -136,7 +103,6 @@ describe('Paddle', () => {
     );
     expect(paddle).toHaveStyle({ top: '0%' });
 
-    // Test position below bounds
     rerender(
       <Provider store={store}>
         <Paddle side="left" position={110} />

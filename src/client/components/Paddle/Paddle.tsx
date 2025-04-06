@@ -1,7 +1,7 @@
 import React from 'react';
 import styles from './Paddle.module.css';
-import { usePaddleMovement } from '../../hooks/usePaddleMovement';
-import { BOARD_HEIGHT, PADDLE_HEIGHT } from '../../constants/game';
+import { usePaddleMovement } from '@/hooks/usePaddleMovement';
+import { BOARD_HEIGHT, PADDLE_HEIGHT } from '@/constants/game';
 
 interface PaddleProps {
   side: 'left' | 'right';

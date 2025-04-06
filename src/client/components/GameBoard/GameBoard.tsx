@@ -1,12 +1,12 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { RootState } from '../../store/store';
+import { RootState } from '@/store/store';
 import Paddle from '../Paddle/Paddle';
 import Ball from '../Ball/Ball';
-import { useBallMovement } from '../../hooks/useBallMovement';
-import useDeviceOrientation from '../../hooks/useDeviceOrientation';
+import { useBallMovement } from '@/hooks/useBallMovement';
+import useDeviceOrientation from '@/hooks/useDeviceOrientation';
 import styles from './GameBoard.module.css';
-import sharedStyles from '../../styles/shared.module.css';
+import sharedStyles from '@/styles/shared.module.css';
 
 const GameBoard: React.FC = () => {
   const { ball, leftPaddle, rightPaddle, status } = useSelector((state: RootState) => state.game);

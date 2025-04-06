@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../store/store';
 import { updateBall, updateScore } from '../store/slices/gameSlice';
-import { BALL_SPEED, BALL_SIZE, BOARD_WIDTH, BOARD_HEIGHT, PADDLE_WIDTH, PADDLE_HEIGHT } from '../constants/game';
+import { BALL_SPEED, BALL_SIZE, PADDLE_WIDTH, PADDLE_HEIGHT } from '../constants/game';
 
 interface UseBallMovementProps {
   isHost: boolean;

@@ -6,44 +6,48 @@ describe('useDeviceOrientation', () => {
   const mockWindow = {
     innerWidth: 375,
     innerHeight: 812,
-    orientation: 0,
+    screen: {
+      orientation: {
+        angle: 0,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      },
+    },
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
   };
 
-  let resizeHandler: (() => void) | null = null;
   let orientationHandler: (() => void) | null = null;
 
   beforeEach(() => {
-    // Define orientation property if it doesn't exist
-    if (!('orientation' in window)) {
-      Object.defineProperty(window, 'orientation', {
-        value: mockWindow.orientation,
-        writable: true,
-        configurable: true,
-      });
-    }
-
     // Mock window properties
     vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(mockWindow.innerWidth);
     vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(mockWindow.innerHeight);
-    vi.spyOn(window, 'orientation', 'get').mockReturnValue(mockWindow.orientation);
     
-    // Mock event listeners to capture handlers
-    vi.spyOn(window, 'addEventListener').mockImplementation((event, handler) => {
-      if (event === 'resize') {
-        resizeHandler = handler as () => void;
-      } else if (event === 'orientationchange') {
-        orientationHandler = handler as () => void;
-      }
+    // Mock screen.orientation
+    Object.defineProperty(window, 'screen', {
+      value: {
+        orientation: {
+          angle: mockWindow.screen.orientation.angle,
+          addEventListener: vi.fn((event, handler) => {
+            if (event === 'change') {
+              orientationHandler = handler as () => void;
+            }
+          }),
+          removeEventListener: vi.fn(),
+        },
+      },
+      writable: true,
+      configurable: true,
     });
     
+    // Mock event listeners
+    vi.spyOn(window, 'addEventListener').mockImplementation(mockWindow.addEventListener);
     vi.spyOn(window, 'removeEventListener').mockImplementation(mockWindow.removeEventListener);
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
-    resizeHandler = null;
     orientationHandler = null;
   });
 
@@ -58,8 +62,7 @@ describe('useDeviceOrientation', () => {
     // Mock landscape dimensions
     vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(812);
     vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(375);
-    Object.defineProperty(window, 'orientation', { value: 90 });
-    vi.spyOn(window, 'orientation', 'get').mockReturnValue(90);
+    Object.defineProperty(window.screen.orientation, 'angle', { value: 90 });
 
     const { result } = renderHook(() => useDeviceOrientation());
     expect(result.current.isPortrait).toBe(false);
@@ -73,13 +76,10 @@ describe('useDeviceOrientation', () => {
     // Simulate orientation change to landscape
     vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(812);
     vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(375);
-    Object.defineProperty(window, 'orientation', { value: 90 });
-    vi.spyOn(window, 'orientation', 'get').mockReturnValue(90);
+    Object.defineProperty(window.screen.orientation, 'angle', { value: 90 });
 
     act(() => {
-      if (orientationHandler) {
-        orientationHandler();
-      }
+      orientationHandler?.();
     });
 
     expect(result.current.isPortrait).toBe(false);
@@ -91,13 +91,10 @@ describe('useDeviceOrientation', () => {
     const { result } = renderHook(() => useDeviceOrientation());
 
     // Simulate device rotation
-    Object.defineProperty(window, 'orientation', { value: 180 });
-    vi.spyOn(window, 'orientation', 'get').mockReturnValue(180);
+    Object.defineProperty(window.screen.orientation, 'angle', { value: 180 });
 
     act(() => {
-      if (orientationHandler) {
-        orientationHandler();
-      }
+      orientationHandler?.();
     });
 
     expect(result.current.angle).toBe(180);
@@ -109,6 +106,6 @@ describe('useDeviceOrientation', () => {
     unmount();
 
     expect(window.removeEventListener).toHaveBeenCalledWith('resize', expect.any(Function));
-    expect(window.removeEventListener).toHaveBeenCalledWith('orientationchange', expect.any(Function));
+    expect(window.screen.orientation.removeEventListener).toHaveBeenCalledWith('change', expect.any(Function));
   });
 }); 
