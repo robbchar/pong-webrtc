@@ -41,10 +41,10 @@
   - [x] Wall collision detection
   - [x] Paddle collision detection
   - [x] Scoring when ball passes paddle
-- [ ] Implement paddle movement
-  - [ ] Mouse/touch input handling
-  - [ ] Smooth transition to target position
-  - [ ] Boundary constraints
+- [x] Implement paddle movement
+  - [x] Mouse/touch input handling
+  - [x] Smooth transition to target position
+  - [x] Boundary constraints
 - [ ] Create game state management
   - [ ] Lobby state with ready button
   - [ ] Countdown state (5,4,3,2,1)
