@@ -1,0 +1,85 @@
+.gameBoard {
+  position: relative;
+  background-color: black;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.portrait {
+  width: 100%;
+  height: 100vh;
+  flex-direction: column;
+}
+
+.landscape {
+  width: 100vw;
+  height: 100vh;
+  flex-direction: row;
+}
+
+.centerLine {
+  position: absolute;
+  background-color: white;
+  opacity: 0.2;
+}
+
+.portrait .centerLine {
+  width: 2px;
+  height: 100%;
+}
+
+.landscape .centerLine {
+  width: 100%;
+  height: 2px;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  z-index: 10;
+}
+
+.readyButton {
+  padding: 1rem 2rem;
+  font-size: 1.5rem;
+  background-color: white;
+  color: black;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.readyButton:hover {
+  transform: scale(1.05);
+}
+
+.countdown {
+  font-size: 4rem;
+  color: white;
+  animation: pulse 1s infinite;
+}
+
+.gameOver {
+  font-size: 3rem;
+  color: white;
+  text-align: center;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+} 

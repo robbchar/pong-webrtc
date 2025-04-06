@@ -33,9 +33,10 @@ input, button, textarea, select {
   --accent-color: #888888;
   --game-width: 800px;
   --game-height: 600px;
-  --paddle-width: 20px;
-  --paddle-height: 100px;
-  --ball-size: 20px;
+  --paddle-width: 15px;
+  --paddle-height: 80px;
+  --paddle-margin: 20px;
+  --ball-size: 15px;
 }
 
 body {

@@ -1,13 +1,17 @@
 import React from 'react';
+import { Provider } from 'react-redux';
+import { store } from './store';
+import GameBoard from './components/GameBoard/GameBoard';
 import styles from './App.module.css';
-import sharedStyles from './styles/shared.module.css';
 
 const App: React.FC = () => {
   return (
-    <div className={`${styles.app} ${sharedStyles.flexCenter} ${sharedStyles.flexColumn}`}>
-      <h1 className={sharedStyles.glowText}>Pong WebRTC</h1>
-      {/* Game components will be added here */}
-    </div>
+    <Provider store={store}>
+      <div className={styles.app}>
+        <h1 className={styles.title}>Pong WebRTC</h1>
+        <GameBoard />
+      </div>
+    </Provider>
   );
 };
 

@@ -1,0 +1,16 @@
+.paddle {
+  position: absolute;
+  width: var(--paddle-width);
+  height: var(--paddle-height);
+  background-color: var(--primary-color);
+  box-shadow: 0 0 10px var(--primary-color);
+  transition: top 0.1s ease-out;
+}
+
+.left {
+  left: var(--paddle-margin);
+}
+
+.right {
+  right: var(--paddle-margin);
+} 
