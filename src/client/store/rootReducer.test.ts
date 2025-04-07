@@ -24,6 +24,8 @@ describe('rootReducer', () => {
         left: 0,
         right: 0,
       },
+      countdown: 5,
+      isReady: false,
     },
     connection: {
       status: 'disconnected' as ConnectionStatus,
