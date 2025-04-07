@@ -26,6 +26,14 @@ const GameBoard: React.FC = () => {
     dispatch(setGameStatus('countdown'));
   };
 
+  const handlePauseClick = () => {
+    dispatch(setGameStatus('paused'));
+  };
+
+  const handleResumeClick = () => {
+    dispatch(setGameStatus('playing'));
+  };
+
   return (
     <div 
       className={`${styles.gameBoard} ${isPortrait ? styles.portrait : styles.landscape}`}
@@ -35,6 +43,19 @@ const GameBoard: React.FC = () => {
       <Paddle side="left" position={leftPaddle.y} />
       <Paddle side="right" position={rightPaddle.y} />
       <Ball x={ball.x} y={ball.y} />
+      
+      {/* Game controls */}
+      {status === 'playing' && (
+        <button 
+          className={styles.pauseButton} 
+          onClick={handlePauseClick}
+          data-testid="pause-button"
+        >
+          PAUSE
+        </button>
+      )}
+
+      {/* Game overlays */}
       {status !== 'playing' && (
         <div className={`${styles.overlay} ${sharedStyles.flexCenter} ${sharedStyles.flexColumn}`}>
           {status === 'waiting' && !isReady && (
@@ -49,6 +70,18 @@ const GameBoard: React.FC = () => {
           {status === 'countdown' && (
             <div className={styles.countdown} data-testid="countdown">
               {countdown}
+            </div>
+          )}
+          {status === 'paused' && (
+            <div className={styles.pauseOverlay}>
+              <h2>PAUSED</h2>
+              <button 
+                className={styles.resumeButton}
+                onClick={handleResumeClick}
+                data-testid="resume-button"
+              >
+                RESUME
+              </button>
             </div>
           )}
           {status === 'gameOver' && (
