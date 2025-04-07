@@ -1,6 +1,7 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store/store';
+import { setReady, setGameStatus } from '@/store/slices/gameSlice';
 import Paddle from '../Paddle/Paddle';
 import Ball from '../Ball/Ball';
 import { useBallMovement } from '@/hooks/useBallMovement';
@@ -9,11 +10,19 @@ import styles from './GameBoard.module.css';
 import sharedStyles from '@/styles/shared.module.css';
 
 const GameBoard: React.FC = () => {
-  const { ball, leftPaddle, rightPaddle, status } = useSelector((state: RootState) => state.game);
+  const dispatch = useDispatch();
+  const { ball, leftPaddle, rightPaddle, status, isReady, countdown } = useSelector((state: RootState) => state.game);
   const { isPortrait } = useDeviceOrientation();
   
   // For now, we'll assume the first player is the host
   useBallMovement({ isHost: true });
+
+  const handleReadyClick = () => {
+    dispatch(setReady(true));
+    // In a real implementation, this would trigger a WebRTC event to the other player
+    // For now, we'll just start the countdown
+    dispatch(setGameStatus('countdown'));
+  };
 
   return (
     <div 
@@ -26,14 +35,18 @@ const GameBoard: React.FC = () => {
       <Ball x={ball.x} y={ball.y} />
       {status !== 'playing' && (
         <div className={`${styles.overlay} ${sharedStyles.flexCenter} ${sharedStyles.flexColumn}`}>
-          {status === 'waiting' && (
-            <button className={styles.readyButton} data-testid="ready-button">
+          {status === 'waiting' && !isReady && (
+            <button 
+              className={styles.readyButton} 
+              onClick={handleReadyClick}
+              data-testid="ready-button"
+            >
               READY
             </button>
           )}
           {status === 'countdown' && (
             <div className={styles.countdown} data-testid="countdown">
-              3
+              {countdown}
             </div>
           )}
           {status === 'gameOver' && (

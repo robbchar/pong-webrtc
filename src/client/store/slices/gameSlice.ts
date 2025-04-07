@@ -24,6 +24,8 @@ interface GameState {
   leftPaddle: Paddle;
   rightPaddle: Paddle;
   score: Score;
+  countdown: number;
+  isReady: boolean;
 }
 
 const initialState: GameState = {
@@ -44,6 +46,8 @@ const initialState: GameState = {
     left: 0,
     right: 0,
   },
+  countdown: 5,
+  isReady: false,
 };
 
 const gameSlice = createSlice({
@@ -69,6 +73,12 @@ const gameSlice = createSlice({
         state.score.right += action.payload.points;
       }
     },
+    setReady: (state, action: PayloadAction<boolean>) => {
+      state.isReady = action.payload;
+    },
+    setCountdown: (state, action: PayloadAction<number>) => {
+      state.countdown = action.payload;
+    },
     resetGame: () => {
       return initialState;
     },
@@ -81,6 +91,8 @@ export const {
   updateLeftPaddle,
   updateRightPaddle,
   updateScore,
+  setReady,
+  setCountdown,
   resetGame,
 } = gameSlice.actions;
 
