@@ -5,6 +5,7 @@ import { setReady, setGameStatus } from '@/store/slices/gameSlice';
 import Paddle from '../Paddle/Paddle';
 import Ball from '../Ball/Ball';
 import { useBallMovement } from '@/hooks/useBallMovement';
+import { useCountdown } from '@/hooks/useCountdown';
 import useDeviceOrientation from '@/hooks/useDeviceOrientation';
 import styles from './GameBoard.module.css';
 import sharedStyles from '@/styles/shared.module.css';
@@ -16,6 +17,7 @@ const GameBoard: React.FC = () => {
   
   // For now, we'll assume the first player is the host
   useBallMovement({ isHost: true });
+  useCountdown();
 
   const handleReadyClick = () => {
     dispatch(setReady(true));
