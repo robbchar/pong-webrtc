@@ -1,19 +1,42 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store/store';
+import { setReady, setGameStatus, resetGame } from '@/store/slices/gameSlice';
 import Paddle from '../Paddle/Paddle';
 import Ball from '../Ball/Ball';
 import { useBallMovement } from '@/hooks/useBallMovement';
+import { useCountdown } from '@/hooks/useCountdown';
 import useDeviceOrientation from '@/hooks/useDeviceOrientation';
 import styles from './GameBoard.module.css';
 import sharedStyles from '@/styles/shared.module.css';
 
 const GameBoard: React.FC = () => {
-  const { ball, leftPaddle, rightPaddle, status } = useSelector((state: RootState) => state.game);
+  const dispatch = useDispatch();
+  const { ball, leftPaddle, rightPaddle, status, isReady, countdown, score, wins } = useSelector((state: RootState) => state.game);
   const { isPortrait } = useDeviceOrientation();
   
   // For now, we'll assume the first player is the host
   useBallMovement({ isHost: true });
+  useCountdown();
+
+  const handleReadyClick = () => {
+    dispatch(setReady(true));
+    // In a real implementation, this would trigger a WebRTC event to the other player
+    // For now, we'll just start the countdown
+    dispatch(setGameStatus('countdown'));
+  };
+
+  const handlePauseClick = () => {
+    dispatch(setGameStatus('paused'));
+  };
+
+  const handleResumeClick = () => {
+    dispatch(setGameStatus('playing'));
+  };
+
+  const handleRestartClick = () => {
+    dispatch(resetGame());
+  };
 
   return (
     <div 
@@ -24,21 +47,75 @@ const GameBoard: React.FC = () => {
       <Paddle side="left" position={leftPaddle.y} />
       <Paddle side="right" position={rightPaddle.y} />
       <Ball x={ball.x} y={ball.y} />
+      
+      {/* Score Display */}
+      <div className={styles.scoreContainer}>
+        <div className={styles.score}>
+          <div className={styles.wins}>
+            {Array(wins.left).fill('✓').map((tick, index) => (
+              <span key={index} className={styles.tick}>{tick}</span>
+            ))}
+          </div>
+          <div className={styles.points}>{score.left}</div>
+        </div>
+        <div className={styles.score}>
+          <div className={styles.wins}>
+            {Array(wins.right).fill('✓').map((tick, index) => (
+              <span key={index} className={styles.tick}>{tick}</span>
+            ))}
+          </div>
+          <div className={styles.points}>{score.right}</div>
+        </div>
+      </div>
+
+      {/* Game controls */}
+      {status === 'playing' && (
+        <button 
+          className={styles.pauseButton} 
+          onClick={handlePauseClick}
+        >
+          PAUSE
+        </button>
+      )}
+
+      {/* Game overlays */}
       {status !== 'playing' && (
         <div className={`${styles.overlay} ${sharedStyles.flexCenter} ${sharedStyles.flexColumn}`}>
-          {status === 'waiting' && (
-            <button className={styles.readyButton} data-testid="ready-button">
+          {status === 'waiting' && !isReady && (
+            <button 
+              className={styles.readyButton} 
+              onClick={handleReadyClick}
+            >
               READY
             </button>
           )}
           {status === 'countdown' && (
             <div className={styles.countdown} data-testid="countdown">
-              3
+              {countdown}
+            </div>
+          )}
+          {status === 'paused' && (
+            <div className={styles.pauseOverlay}>
+              <h2>PAUSED</h2>
+              <button 
+                className={styles.resumeButton}
+                onClick={handleResumeClick}
+              >
+                RESUME
+              </button>
             </div>
           )}
           {status === 'gameOver' && (
             <div className={styles.gameOver} data-testid="game-over">
-              GAME OVER
+              <h2>GAME OVER</h2>
+              <p>{score.left > score.right ? 'Left Player Wins!' : 'Right Player Wins!'}</p>
+              <button 
+                className={styles.restartButton}
+                onClick={handleRestartClick}
+                data-testid="restart-button"
+              >
+                PLAY AGAIN
+              </button>
             </div>
           )}
         </div>

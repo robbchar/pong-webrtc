@@ -1,10 +1,9 @@
 .gameBoard {
   position: relative;
+  width: 100%;
+  height: 100%;
   background-color: black;
   overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
 .portrait {
@@ -21,55 +20,157 @@
 
 .centerLine {
   position: absolute;
-  background-color: white;
-  opacity: 0.2;
-}
-
-.portrait .centerLine {
+  top: 0;
+  left: 50%;
   width: 2px;
   height: 100%;
+  background-color: rgba(255, 255, 255, 0.2);
 }
 
-.landscape .centerLine {
-  width: 100%;
-  height: 2px;
+.scoreContainer {
+  position: absolute;
+  top: 20px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 20px;
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.wins {
+  display: flex;
+  gap: 5px;
+}
+
+.tick {
+  color: #4CAF50;
+  font-size: 20px;
+}
+
+.points {
+  font-size: 32px;
 }
 
 .overlay {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  right: 0;
+  bottom: 0;
   background-color: rgba(0, 0, 0, 0.7);
-  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .readyButton {
-  padding: 1rem 2rem;
-  font-size: 1.5rem;
-  background-color: white;
-  color: black;
+  padding: 15px 30px;
+  font-size: 24px;
+  background-color: #4CAF50;
+  color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 5px;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: background-color 0.3s;
 }
 
 .readyButton:hover {
-  transform: scale(1.05);
+  background-color: #45a049;
+}
+
+.resumeButton {
+  padding: 15px 30px;
+  font-size: 24px;
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.resumeButton:hover {
+  background-color: #0b7dda;
+}
+
+.restartButton {
+  padding: 15px 30px;
+  font-size: 24px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-top: 20px;
+}
+
+.restartButton:hover {
+  background-color: #45a049;
+}
+
+.pauseButton {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 10px;
+  border-radius: 50%;
+  transition: background-color 0.3s;
+}
+
+.pauseButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .countdown {
-  font-size: 4rem;
+  font-size: 72px;
   color: white;
-  animation: pulse 1s infinite;
+  font-weight: bold;
 }
 
 .gameOver {
-  font-size: 3rem;
-  color: white;
   text-align: center;
+  color: white;
+}
+
+.gameOver h2 {
+  font-size: 48px;
+  margin-bottom: 20px;
+}
+
+.gameOver p {
+  font-size: 24px;
+  margin-bottom: 30px;
+}
+
+.pauseOverlay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.pauseOverlay h2 {
+  font-size: 48px;
+  font-weight: bold;
+  color: #fff;
+  margin: 0;
 }
 
 @keyframes pulse {

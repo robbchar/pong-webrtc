@@ -2,28 +2,30 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export type GameStatus = 'waiting' | 'countdown' | 'playing' | 'paused' | 'gameOver';
 
-interface Ball {
-  x: number;
-  y: number;
-  velocityX: number;
-  velocityY: number;
-}
-
-interface Paddle {
-  y: number;
-}
-
-interface Score {
-  left: number;
-  right: number;
-}
-
 interface GameState {
   status: GameStatus;
-  ball: Ball;
-  leftPaddle: Paddle;
-  rightPaddle: Paddle;
-  score: Score;
+  ball: {
+    x: number;
+    y: number;
+    velocityX: number;
+    velocityY: number;
+  };
+  leftPaddle: {
+    y: number;
+  };
+  rightPaddle: {
+    y: number;
+  };
+  score: {
+    left: number;
+    right: number;
+  };
+  wins: {
+    left: number;
+    right: number;
+  };
+  countdown: number;
+  isReady: boolean;
 }
 
 const initialState: GameState = {
@@ -44,6 +46,12 @@ const initialState: GameState = {
     left: 0,
     right: 0,
   },
+  wins: {
+    left: 0,
+    right: 0,
+  },
+  countdown: 5,
+  isReady: false,
 };
 
 const gameSlice = createSlice({
@@ -53,24 +61,37 @@ const gameSlice = createSlice({
     setGameStatus: (state, action: PayloadAction<GameStatus>) => {
       state.status = action.payload;
     },
-    updateBall: (state, action: PayloadAction<Partial<Ball>>) => {
-      state.ball = { ...state.ball, ...action.payload };
+    updateBall: (state, action: PayloadAction<GameState['ball']>) => {
+      state.ball = action.payload;
     },
-    updateLeftPaddle: (state, action: PayloadAction<Partial<Paddle>>) => {
-      state.leftPaddle = { ...state.leftPaddle, ...action.payload };
+    updateLeftPaddle: (state, action: PayloadAction<number>) => {
+      state.leftPaddle.y = action.payload;
     },
-    updateRightPaddle: (state, action: PayloadAction<Partial<Paddle>>) => {
-      state.rightPaddle = { ...state.rightPaddle, ...action.payload };
+    updateRightPaddle: (state, action: PayloadAction<number>) => {
+      state.rightPaddle.y = action.payload;
     },
     updateScore: (state, action: PayloadAction<{ player: 'left' | 'right'; points: number }>) => {
-      if (action.payload.player === 'left') {
-        state.score.left += action.payload.points;
-      } else {
-        state.score.right += action.payload.points;
+      const { player, points } = action.payload;
+      state.score[player] = points;
+      
+      // Check if game is over (10 points)
+      if (points >= 10) {
+        state.wins[player]++;
+        state.status = 'gameOver';
       }
     },
-    resetGame: () => {
-      return initialState;
+    resetGame: (state) => {
+      state.status = 'waiting';
+      state.ball = initialState.ball;
+      state.score = initialState.score;
+      state.countdown = initialState.countdown;
+      state.isReady = false;
+    },
+    setCountdown: (state, action: PayloadAction<number>) => {
+      state.countdown = action.payload;
+    },
+    setReady: (state, action: PayloadAction<boolean>) => {
+      state.isReady = action.payload;
     },
   },
 });
@@ -82,6 +103,8 @@ export const {
   updateRightPaddle,
   updateScore,
   resetGame,
+  setCountdown,
+  setReady,
 } = gameSlice.actions;
 
 export default gameSlice.reducer; 

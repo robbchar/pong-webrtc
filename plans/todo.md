@@ -36,25 +36,25 @@
 - [x] Create device orientation detection for mobile
 
 ## Phase 3: Game Physics and Logic
-- [ ] Implement ball movement logic
-  - [ ] Basic movement with velocity
-  - [ ] Wall collision detection
-  - [ ] Paddle collision detection
-  - [ ] Scoring when ball passes paddle
-- [ ] Implement paddle movement
-  - [ ] Mouse/touch input handling
-  - [ ] Smooth transition to target position
-  - [ ] Boundary constraints
-- [ ] Create game state management
-  - [ ] Lobby state with ready button
-  - [ ] Countdown state (5,4,3,2,1)
-  - [ ] Playing state
-  - [ ] Paused state
-  - [ ] Game over state
-- [ ] Implement scoring system
-  - [ ] Point tracking
-  - [ ] Game end at 10 points
-  - [ ] Win tracking with tick marks
+- [x] Implement ball movement logic
+  - [x] Basic movement with velocity
+  - [x] Wall collision detection
+  - [x] Paddle collision detection
+  - [x] Scoring when ball passes paddle
+- [x] Implement paddle movement
+  - [x] Mouse/touch input handling
+  - [x] Smooth transition to target position
+  - [x] Boundary constraints
+- [x] Create game state management
+  - [x] Lobby state with ready button
+  - [x] Countdown state (5,4,3,2,1)
+  - [x] Playing state
+  - [x] Paused state
+  - [x] Game over state
+- [x] Implement scoring system
+  - [x] Point tracking
+  - [x] Game end at 10 points
+  - [x] Win tracking with tick marks
 
 ## Phase 4: Networking with WebRTC
 - [ ] Implement WebSocket signaling server

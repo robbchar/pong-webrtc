@@ -1,4 +1,4 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
 
@@ -14,7 +14,7 @@ const connectionSlice = createSlice({
   name: 'connection',
   initialState,
   reducers: {
-    setConnectionStatus: (state, action: { payload: ConnectionStatus }) => {
+    setConnectionStatus: (state, action: PayloadAction<ConnectionStatus>) => {
       state.status = action.payload;
     },
   },
