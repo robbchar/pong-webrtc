@@ -36,35 +36,39 @@ describe('GameBoard', () => {
     countdown: number;
     isReady: boolean;
   }> = {}) => {
+    const defaultState = {
+      status: 'waiting' as GameStatus,
+      ball: {
+        x: 50,
+        y: 50,
+        velocityX: 0,
+        velocityY: 0,
+      },
+      leftPaddle: {
+        y: 50,
+      },
+      rightPaddle: {
+        y: 50,
+      },
+      score: {
+        left: 0,
+        right: 0,
+      },
+      wins: {
+        left: 0,
+        right: 0,
+      },
+      countdown: 5,
+      isReady: false,
+    };
+
     return configureStore({
       reducer: {
         game: gameReducer,
       },
       preloadedState: {
         game: {
-          status: 'waiting' as GameStatus,
-          ball: {
-            x: 50,
-            y: 50,
-            velocityX: 0,
-            velocityY: 0,
-          },
-          leftPaddle: {
-            y: 50,
-          },
-          rightPaddle: {
-            y: 50,
-          },
-          score: {
-            left: 0,
-            right: 0,
-          },
-          wins: {
-            left: 0,
-            right: 0,
-          },
-          countdown: 5,
-          isReady: false,
+          ...defaultState,
           ...initialState,
         },
       },
