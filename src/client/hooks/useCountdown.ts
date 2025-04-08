@@ -1,30 +1,32 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '@/store/store';
-import { setCountdown, setGameStatus } from '@/store/slices/gameSlice';
+import { setGameStatus, setCountdown } from '@/store/slices/gameSlice';
 
 export const useCountdown = () => {
   const dispatch = useDispatch();
-  const { status, countdown } = useSelector((state: RootState) => state.game);
-  const timerRef = useRef<number>();
+  const status = useSelector((state: RootState) => state.game.status);
+  const countdown = useSelector((state: RootState) => state.game.countdown);
+  const [timer, setTimer] = useState<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (status === 'countdown') {
-      timerRef.current = window.setInterval(() => {
+      const interval = setInterval(() => {
         dispatch(setCountdown(countdown - 1));
       }, 1000);
+      setTimer(interval);
+
+      if (countdown <= 0) {
+        dispatch(setGameStatus('playing'));
+      }
     }
 
     return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
+      if (timer) {
+        clearInterval(timer);
       }
     };
-  }, [status, countdown, dispatch]);
+  }, [status, countdown, dispatch, timer]);
 
-  useEffect(() => {
-    if (countdown === 0) {
-      dispatch(setGameStatus('playing'));
-    }
-  }, [countdown, dispatch]);
+  return countdown;
 }; 

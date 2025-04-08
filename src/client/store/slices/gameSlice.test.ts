@@ -85,32 +85,30 @@ describe('gameSlice', () => {
 
   describe('updateLeftPaddle', () => {
     it('should update left paddle position', () => {
-      const newPosition = { y: 75 };
-      const actual = gameReducer(initialState, updateLeftPaddle(newPosition));
+      const actual = gameReducer(initialState, updateLeftPaddle(75));
       expect(actual.leftPaddle.y).toBe(75);
     });
 
     it('should handle edge positions', () => {
-      const positions = [{ y: 0 }, { y: 100 }];
+      const positions = [0, 100];
       positions.forEach(position => {
         const actual = gameReducer(initialState, updateLeftPaddle(position));
-        expect(actual.leftPaddle).toEqual(position);
+        expect(actual.leftPaddle.y).toBe(position);
       });
     });
   });
 
   describe('updateRightPaddle', () => {
     it('should update right paddle position', () => {
-      const newPosition = { y: 25 };
-      const actual = gameReducer(initialState, updateRightPaddle(newPosition));
+      const actual = gameReducer(initialState, updateRightPaddle(25));
       expect(actual.rightPaddle.y).toBe(25);
     });
 
     it('should handle edge positions', () => {
-      const positions = [{ y: 0 }, { y: 100 }];
+      const positions = [0, 100];
       positions.forEach(position => {
         const actual = gameReducer(initialState, updateRightPaddle(position));
-        expect(actual.rightPaddle).toEqual(position);
+        expect(actual.rightPaddle.y).toBe(position);
       });
     });
   });

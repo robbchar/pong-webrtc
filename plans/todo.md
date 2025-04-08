@@ -45,12 +45,12 @@
   - [x] Mouse/touch input handling
   - [x] Smooth transition to target position
   - [x] Boundary constraints
-- [ ] Create game state management
-  - [ ] Lobby state with ready button
-  - [ ] Countdown state (5,4,3,2,1)
-  - [ ] Playing state
-  - [ ] Paused state
-  - [ ] Game over state
+- [x] Create game state management
+  - [x] Lobby state with ready button
+  - [x] Countdown state (5,4,3,2,1)
+  - [x] Playing state
+  - [x] Paused state
+  - [x] Game over state
 - [ ] Implement scoring system
   - [ ] Point tracking
   - [ ] Game end at 10 points

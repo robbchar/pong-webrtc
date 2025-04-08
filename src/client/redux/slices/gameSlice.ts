@@ -23,6 +23,7 @@ interface GameState {
   rightPaddle: Paddle;
   scores: Scores;
   countdown: number;
+  isReady: boolean;
 }
 
 const initialState: GameState = {
@@ -32,6 +33,7 @@ const initialState: GameState = {
   rightPaddle: { y: 50 },
   scores: { left: 0, right: 0 },
   countdown: 5,
+  isReady: false,
 };
 
 const gameSlice = createSlice({
@@ -66,6 +68,9 @@ const gameSlice = createSlice({
     resetGame: (state) => {
       return { ...initialState, status: 'lobby' };
     },
+    setReady: (state, action: PayloadAction<boolean>) => {
+      state.isReady = action.payload;
+    },
   },
 });
 
@@ -76,6 +81,7 @@ export const {
   setGameStatus,
   setCountdown,
   resetGame,
+  setReady,
 } = gameSlice.actions;
 
 export default gameSlice.reducer; 

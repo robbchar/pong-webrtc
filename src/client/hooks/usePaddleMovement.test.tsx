@@ -14,6 +14,7 @@ interface GameState {
   rightPaddle: { y: number };
   scores: { left: number; right: number };
   countdown: number;
+  isReady: boolean;
 }
 
 // Extend Window interface to include our test helper
@@ -36,6 +37,7 @@ describe('usePaddleMovement', () => {
         rightPaddle: { y: 50 },
         scores: { left: 0, right: 0 },
         countdown: 5,
+        isReady: false,
       } as GameState,
     },
   });
