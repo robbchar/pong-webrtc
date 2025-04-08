@@ -1,9 +1,14 @@
 .gameBoard {
   position: relative;
-  width: 100%;
-  height: 100%;
-  background-color: black;
-  overflow: hidden;
+  width: 80vw; /* Adjust as needed */
+  height: 50vw; /* Adjust based on width for aspect ratio */
+  max-width: 1000px; /* Example max width */
+  max-height: 625px; /* Example max height based on aspect ratio */
+  background-color: #000;
+  border: 2px solid #fff;
+  margin: auto; /* Center the board */
+  overflow: hidden; /* Keep elements inside */
+  user-select: none; /* Prevent text selection */
 }
 
 .portrait {
@@ -183,4 +188,15 @@
   100% {
     transform: scale(1);
   }
+}
+
+.gameOverMessage {
+  font-size: 2em;
+  margin-bottom: 20px;
+}
+
+.waitingText {
+  font-size: 1.5em;
+  margin-bottom: 20px;
+  color: #ccc; /* Adjust color as needed */
 } 
