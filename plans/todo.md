@@ -51,10 +51,10 @@
   - [x] Playing state
   - [x] Paused state
   - [x] Game over state
-- [ ] Implement scoring system
-  - [ ] Point tracking
-  - [ ] Game end at 10 points
-  - [ ] Win tracking with tick marks
+- [x] Implement scoring system
+  - [x] Point tracking
+  - [x] Game end at 10 points
+  - [x] Win tracking with tick marks
 
 ## Phase 4: Networking with WebRTC
 - [ ] Implement WebSocket signaling server
