@@ -76,16 +76,19 @@ const gameSlice = createSlice({
       
       // Check if game is over (10 points)
       if (points >= 10) {
-        state.wins[player]++;
+        state.wins[player] = state.wins[player] + 1;
         state.status = 'gameOver';
       }
     },
     resetGame: (state) => {
-      state.status = 'waiting';
-      state.ball = initialState.ball;
-      state.score = initialState.score;
-      state.countdown = initialState.countdown;
-      state.isReady = false;
+      return {
+        ...state,
+        status: 'waiting',
+        ball: { ...initialState.ball },
+        score: { ...initialState.score },
+        countdown: initialState.countdown,
+        isReady: false,
+      };
     },
     setCountdown: (state, action: PayloadAction<number>) => {
       state.countdown = action.payload;
