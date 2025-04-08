@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store/store';
-import { setReady, setGameStatus } from '@/store/slices/gameSlice';
+import { setReady, setGameStatus, resetGame } from '@/store/slices/gameSlice';
 import Paddle from '../Paddle/Paddle';
 import Ball from '../Ball/Ball';
 import { useBallMovement } from '@/hooks/useBallMovement';
@@ -12,7 +12,7 @@ import sharedStyles from '@/styles/shared.module.css';
 
 const GameBoard: React.FC = () => {
   const dispatch = useDispatch();
-  const { ball, leftPaddle, rightPaddle, status, isReady, countdown } = useSelector((state: RootState) => state.game);
+  const { ball, leftPaddle, rightPaddle, status, isReady, countdown, score, wins } = useSelector((state: RootState) => state.game);
   const { isPortrait } = useDeviceOrientation();
   
   // For now, we'll assume the first player is the host
@@ -34,6 +34,10 @@ const GameBoard: React.FC = () => {
     dispatch(setGameStatus('playing'));
   };
 
+  const handleRestartClick = () => {
+    dispatch(resetGame());
+  };
+
   return (
     <div 
       className={`${styles.gameBoard} ${isPortrait ? styles.portrait : styles.landscape}`}
@@ -44,6 +48,26 @@ const GameBoard: React.FC = () => {
       <Paddle side="right" position={rightPaddle.y} />
       <Ball x={ball.x} y={ball.y} />
       
+      {/* Score Display */}
+      <div className={styles.scoreContainer}>
+        <div className={styles.score}>
+          <div className={styles.wins}>
+            {Array(wins.left).fill('✓').map((tick, index) => (
+              <span key={index} className={styles.tick}>{tick}</span>
+            ))}
+          </div>
+          <div className={styles.points}>{score.left}</div>
+        </div>
+        <div className={styles.score}>
+          <div className={styles.wins}>
+            {Array(wins.right).fill('✓').map((tick, index) => (
+              <span key={index} className={styles.tick}>{tick}</span>
+            ))}
+          </div>
+          <div className={styles.points}>{score.right}</div>
+        </div>
+      </div>
+
       {/* Game controls */}
       {status === 'playing' && (
         <button 
@@ -86,7 +110,15 @@ const GameBoard: React.FC = () => {
           )}
           {status === 'gameOver' && (
             <div className={styles.gameOver} data-testid="game-over">
-              GAME OVER
+              <h2>GAME OVER</h2>
+              <p>{score.left > score.right ? 'Left Player Wins!' : 'Right Player Wins!'}</p>
+              <button 
+                className={styles.restartButton}
+                onClick={handleRestartClick}
+                data-testid="restart-button"
+              >
+                PLAY AGAIN
+              </button>
             </div>
           )}
         </div>

@@ -21,6 +21,10 @@ describe('gameSlice', () => {
       left: 0,
       right: 0,
     },
+    wins: {
+      left: 0,
+      right: 0,
+    },
     countdown: 5,
     isReady: false,
   };
@@ -52,10 +56,49 @@ describe('gameSlice', () => {
       expect(actual.score.right).toBe(0);
     });
 
-    it('should handle zero scores', () => {
-      const actual = gameReducer(initialState, updateScore({ player: 'right', points: 0 }));
-      expect(actual.score.left).toBe(0);
-      expect(actual.score.right).toBe(0);
+    it('should not trigger game over when score is less than 10', () => {
+      const actual = gameReducer(initialState, updateScore({ player: 'left', points: 9 }));
+      expect(actual.score.left).toBe(9);
+      expect(actual.status).toBe('waiting');
+      expect(actual.wins.left).toBe(0);
+    });
+
+    it('should trigger game over and increment wins when score reaches 10', () => {
+      const actual = gameReducer(initialState, updateScore({ player: 'left', points: 10 }));
+      expect(actual.score.left).toBe(10);
+      expect(actual.status).toBe('gameOver');
+      expect(actual.wins.left).toBe(1);
+    });
+
+    it('should handle multiple wins', () => {
+      // First win
+      let state = gameReducer(initialState, updateScore({ player: 'left', points: 10 }));
+      expect(state.wins.left).toBe(1);
+
+      // Reset game
+      state = gameReducer(state, setGameStatus('waiting'));
+      state = gameReducer(state, updateScore({ player: 'left', points: 0 }));
+
+      // Second win
+      state = gameReducer(state, updateScore({ player: 'left', points: 10 }));
+      expect(state.wins.left).toBe(2);
+    });
+  });
+
+  describe('resetGame', () => {
+    it('should reset game state but keep wins', () => {
+      // First set up a game with some score and a win
+      let state = gameReducer(initialState, updateScore({ player: 'left', points: 10 }));
+      expect(state.wins.left).toBe(1);
+
+      // Reset the game
+      state = gameReducer(state, setGameStatus('waiting'));
+      state = gameReducer(state, updateScore({ player: 'left', points: 0 }));
+
+      // Verify score is reset but wins remain
+      expect(state.score.left).toBe(0);
+      expect(state.wins.left).toBe(1);
+      expect(state.status).toBe('waiting');
     });
   });
 

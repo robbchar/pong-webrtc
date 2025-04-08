@@ -20,6 +20,10 @@ interface GameState {
     left: number;
     right: number;
   };
+  wins: {
+    left: number;
+    right: number;
+  };
   countdown: number;
   isReady: boolean;
 }
@@ -39,6 +43,10 @@ const initialState: GameState = {
     y: 50,
   },
   score: {
+    left: 0,
+    right: 0,
+  },
+  wins: {
     left: 0,
     right: 0,
   },
@@ -63,7 +71,21 @@ const gameSlice = createSlice({
       state.rightPaddle.y = action.payload;
     },
     updateScore: (state, action: PayloadAction<{ player: 'left' | 'right'; points: number }>) => {
-      state.score[action.payload.player] = action.payload.points;
+      const { player, points } = action.payload;
+      state.score[player] = points;
+      
+      // Check if game is over (10 points)
+      if (points >= 10) {
+        state.wins[player]++;
+        state.status = 'gameOver';
+      }
+    },
+    resetGame: (state) => {
+      state.status = 'waiting';
+      state.ball = initialState.ball;
+      state.score = initialState.score;
+      state.countdown = initialState.countdown;
+      state.isReady = false;
     },
     setCountdown: (state, action: PayloadAction<number>) => {
       state.countdown = action.payload;
@@ -80,6 +102,7 @@ export const {
   updateLeftPaddle,
   updateRightPaddle,
   updateScore,
+  resetGame,
   setCountdown,
   setReady,
 } = gameSlice.actions;

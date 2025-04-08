@@ -10,7 +10,7 @@ interface UseBallMovementProps {
 
 export const useBallMovement = ({ isHost }: UseBallMovementProps) => {
   const dispatch = useDispatch();
-  const { ball, leftPaddle, rightPaddle } = useSelector((state: RootState) => state.game);
+  const { ball, leftPaddle, rightPaddle, score } = useSelector((state: RootState) => state.game);
   const animationFrameRef = useRef<number>();
 
   useEffect(() => {
@@ -76,7 +76,7 @@ export const useBallMovement = ({ isHost }: UseBallMovementProps) => {
 
       // Check scoring
       if (newX <= 0) {
-        dispatch(updateScore({ player: 'right', points: 1 }));
+        dispatch(updateScore({ player: 'right', points: score.right + 1 }));
         dispatch(updateBall({
           ...ball,
           x: 50,
@@ -85,7 +85,7 @@ export const useBallMovement = ({ isHost }: UseBallMovementProps) => {
           velocityY: 0
         }));
       } else if (newX >= 100) {
-        dispatch(updateScore({ player: 'left', points: 1 }));
+        dispatch(updateScore({ player: 'left', points: score.left + 1 }));
         dispatch(updateBall({
           ...ball,
           x: 50,
@@ -112,5 +112,5 @@ export const useBallMovement = ({ isHost }: UseBallMovementProps) => {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [ball, leftPaddle, rightPaddle, isHost, dispatch]);
+  }, [ball, leftPaddle, rightPaddle, score, isHost, dispatch]);
 }; 
