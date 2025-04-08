@@ -2,6 +2,8 @@ import express from 'express';
 import { WebSocketServer, WebSocket } from 'ws';
 import { createServer, IncomingMessage } from 'http';
 import { v4 as uuidv4 } from 'uuid';
+import { Buffer } from 'buffer';
+import os from 'os'; // Import the os module
 
 // Define the structure for signaling messages
 interface SignalingMessage {
@@ -20,6 +22,22 @@ const PORT = process.env.PORT || 8080;
 const clients = new Map<string, WebSocket>(); // Use base WebSocket type
 const pairings = new Map<string, string>(); // Map<clientId, opponentId>
 let waitingClientId: string | null = null; // Track the ID of a client waiting for a pair
+
+// Helper function to get local network IP
+function getLocalNetworkIp(): string | null {
+  const interfaces = os.networkInterfaces();
+  for (const name of Object.keys(interfaces)) {
+    const ifaceDetails = interfaces[name];
+    if (!ifaceDetails) continue;
+    for (const iface of ifaceDetails) {
+      // Skip over internal (i.e. 127.0.0.1) and non-ipv4 addresses
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address;
+      }
+    }
+  }
+  return null; // Return null if no suitable IP found
+}
 
 console.log('Signaling server starting...');
 
@@ -59,7 +77,7 @@ wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
     console.log(`Client ${clientId} is waiting for an opponent.`);
   }
 
-  ws.on('message', (messageBuffer) => {
+  ws.on('message', (messageBuffer: Buffer) => {
     let messageData: SignalingMessage;
     const senderId = (ws as any).id;
     if (!senderId) return; // Should have an ID
@@ -74,13 +92,13 @@ wss.on('connection', (ws: WebSocket, req: IncomingMessage) => {
     }
   });
 
-  ws.on('close', (code, reason) => {
+  ws.on('close', (code: number, reason: Buffer) => {
     const closedClientId = (ws as any).id ?? 'unknown';
     console.log(`Client disconnected: ${closedClientId}, Code: ${code}, Reason: ${reason.toString()}`);
     handleDisconnect(ws);
   });
 
-  ws.on('error', (error) => {
+  ws.on('error', (error: Error) => {
     const errorClientId = (ws as any).id ?? 'unknown';
     console.error(`WebSocket error for client ${errorClientId}:`, error);
     handleDisconnect(ws); // Treat errors as disconnects for cleanup
@@ -174,5 +192,10 @@ function handleDisconnect(ws: WebSocket) {
 }
 
 server.listen(PORT, () => {
-  console.log(`Signaling server running on http://localhost:${PORT}`);
+  const localIp = getLocalNetworkIp();
+  console.log(`Signaling server running on:`);
+  console.log(`  - http://localhost:${PORT}`);
+  if (localIp) {
+    console.log(`  - http://${localIp}:${PORT} (for local network)`);
+  }
 }); 

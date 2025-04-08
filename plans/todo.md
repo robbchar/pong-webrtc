@@ -96,10 +96,6 @@
   - [ ] Game winner display
 
 ## Phase 6: Testing and Deployment
-- [ ] Write unit tests
-  - [ ] Game physics tests
-  - [ ] Component rendering tests
-  - [ ] Redux state tests
 - [ ] Write integration tests
   - [ ] Game flow tests
   - [ ] WebRTC connection tests (mocked)
