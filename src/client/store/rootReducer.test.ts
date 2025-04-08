@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import rootReducer from '@/store/rootReducer';
-import { setConnectionStatus } from '@/store/slices/connectionSlice';
+import { setSignalingStatus, ConnectionState } from '@/store/slices/connectionSlice';
 import { GameStatus } from '@/store/slices/gameSlice';
-import { ConnectionStatus } from '@/store/slices/connectionSlice';
+import { SignalingStatus } from '@/types/signalingTypes';
 
 describe('rootReducer', () => {
   const initialState = {
@@ -32,10 +32,12 @@ describe('rootReducer', () => {
       isReady: false,
     },
     connection: {
-      status: 'disconnected' as ConnectionStatus,
+      signalingStatus: SignalingStatus.CLOSED,
+      peerStatus: 'idle',
       peerId: null,
+      isHost: false,
       error: null,
-    },
+    } as ConnectionState,
   };
 
   it('should handle initial state', () => {
@@ -56,9 +58,9 @@ describe('rootReducer', () => {
     expect(newState.game.ball).toEqual(action.payload);
   });
 
-  it('should handle updates to connection state', () => {
-    const newState = rootReducer(initialState, setConnectionStatus('connected'));
-    expect(newState.connection.status).toBe('connected');
+  it('should handle updates to connection state (signalingStatus)', () => {
+    const newState = rootReducer(initialState, setSignalingStatus(SignalingStatus.CONNECTING));
+    expect(newState.connection.signalingStatus).toBe(SignalingStatus.CONNECTING);
   });
 
   it('should maintain state isolation between slices', () => {

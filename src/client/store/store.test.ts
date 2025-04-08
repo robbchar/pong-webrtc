@@ -19,7 +19,7 @@ describe('store configuration', () => {
       velocityX: 0,
       velocityY: 0,
     });
-    expect(state.connection.status).toBe('disconnected');
+    expect(state.connection.signalingStatus).toBe('closed');
   });
 
   it('should have redux devtools configured correctly', () => {
