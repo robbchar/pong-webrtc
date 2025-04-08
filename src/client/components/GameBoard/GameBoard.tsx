@@ -81,13 +81,14 @@ const GameBoard: React.FC = () => {
       {/* Game overlays */}
       {status !== 'playing' && (
         <div className={`${styles.overlay} ${sharedStyles.flexCenter} ${sharedStyles.flexColumn}`}>
-          {status === 'waiting' && !isReady && (
-            <button 
-              className={styles.readyButton} 
-              onClick={handleReadyClick}
-            >
-              READY
-            </button>
+          {/* Waiting Overlay */}
+          {status === 'waiting' && (
+            <div className={`${styles.overlay} ${styles.waitingOverlay}`}>
+              <p className={styles.waitingText}>Waiting for opponent...</p>
+              {/* <button className={styles.button} onClick={handleReadyClick}>
+                READY
+              </button> */}
+            </div>
           )}
           {status === 'countdown' && (
             <div className={styles.countdown} data-testid="countdown">

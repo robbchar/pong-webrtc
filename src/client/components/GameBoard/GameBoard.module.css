@@ -183,4 +183,15 @@
   100% {
     transform: scale(1);
   }
+}
+
+.gameOverMessage {
+  font-size: 2em;
+  margin-bottom: 20px;
+}
+
+.waitingText {
+  font-size: 1.5em;
+  margin-bottom: 20px;
+  color: #ccc; /* Adjust color as needed */
 } 
