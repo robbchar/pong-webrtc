@@ -87,12 +87,12 @@ describe('GameBoard', () => {
 
   it('should show ready button in waiting state when not ready', () => {
     renderWithStore(createMockStore({ status: 'waiting', isReady: false }));
-    expect(screen.getByTestId('ready-button')).toBeInTheDocument();
+    expect(screen.getByText('READY')).toBeInTheDocument();
   });
 
   it('should not show ready button when ready', () => {
     renderWithStore(createMockStore({ status: 'waiting', isReady: true }));
-    expect(screen.queryByTestId('ready-button')).not.toBeInTheDocument();
+    expect(screen.queryByText('READY')).not.toBeInTheDocument();
   });
 
   it('should show countdown when in countdown state', () => {
@@ -101,15 +101,15 @@ describe('GameBoard', () => {
     expect(screen.getByTestId('countdown')).toHaveTextContent('3');
   });
 
-  it('should show pause button during gameplay', () => {
+  it('should show pause button during gameplay', async () => {
     renderWithStore(createMockStore({ status: 'playing' }));
-    expect(screen.getByTestId('pause-button')).toBeInTheDocument();
+    expect(await screen.findByText('PAUSE')).toBeInTheDocument();
   });
 
   it('should show pause overlay when game is paused', () => {
     renderWithStore(createMockStore({ status: 'paused' }));
     expect(screen.getByText('PAUSED')).toBeInTheDocument();
-    expect(screen.getByTestId('resume-button')).toBeInTheDocument();
+    expect(screen.getByText('RESUME')).toBeInTheDocument();
   });
 
   it('should show game over when game is finished', () => {
@@ -121,26 +121,26 @@ describe('GameBoard', () => {
     const store = createMockStore({ status: 'waiting', isReady: false });
     renderWithStore(store);
     
-    fireEvent.click(screen.getByTestId('ready-button'));
+    fireEvent.click(screen.getByText('READY'));
     
     expect(store.getState().game.isReady).toBe(true);
     expect(store.getState().game.status).toBe('countdown');
   });
 
-  it('should handle pause button click', () => {
+  it('should handle pause button click', async () => {
     const store = createMockStore({ status: 'playing' });
     renderWithStore(store);
     
-    fireEvent.click(screen.getByTestId('pause-button'));
+    fireEvent.click(await screen.findByText('PAUSE'));
     
     expect(store.getState().game.status).toBe('paused');
   });
 
-  it('should handle resume button click', () => {
+  it('should handle resume button click', async () => {
     const store = createMockStore({ status: 'paused' });
     renderWithStore(store);
     
-    fireEvent.click(screen.getByTestId('resume-button'));
+    fireEvent.click(await screen.findByText('RESUME'));
     
     expect(store.getState().game.status).toBe('playing');
   });

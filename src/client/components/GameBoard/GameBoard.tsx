@@ -73,7 +73,6 @@ const GameBoard: React.FC = () => {
         <button 
           className={styles.pauseButton} 
           onClick={handlePauseClick}
-          data-testid="pause-button"
         >
           PAUSE
         </button>
@@ -86,7 +85,6 @@ const GameBoard: React.FC = () => {
             <button 
               className={styles.readyButton} 
               onClick={handleReadyClick}
-              data-testid="ready-button"
             >
               READY
             </button>
@@ -102,7 +100,6 @@ const GameBoard: React.FC = () => {
               <button 
                 className={styles.resumeButton}
                 onClick={handleResumeClick}
-                data-testid="resume-button"
               >
                 RESUME
               </button>
