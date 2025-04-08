@@ -57,11 +57,11 @@
   - [x] Win tracking with tick marks
 
 ## Phase 4: Networking with WebRTC
-- [ ] Implement WebSocket signaling server
-  - [ ] Handle player connections
-  - [ ] Implement player matching
-  - [ ] Relay WebRTC connection data
-  - [ ] Handle disconnections
+- [x] Implement WebSocket signaling server
+  - [x] Handle player connections
+  - [x] Implement player matching
+  - [x] Relay WebRTC connection data
+  - [x] Handle disconnections
 - [ ] Implement WebRTC connection
   - [ ] Create peer connection with Google's STUN server
   - [ ] Implement data channel for game data
@@ -96,10 +96,6 @@
   - [ ] Game winner display
 
 ## Phase 6: Testing and Deployment
-- [ ] Write unit tests
-  - [ ] Game physics tests
-  - [ ] Component rendering tests
-  - [ ] Redux state tests
 - [ ] Write integration tests
   - [ ] Game flow tests
   - [ ] WebRTC connection tests (mocked)
