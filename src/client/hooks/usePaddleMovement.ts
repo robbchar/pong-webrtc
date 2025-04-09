@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { updatePaddle } from '../redux/slices/gameSlice';
+import { webRTCService } from '@/services/webRTCService';
+import { ConnectionState } from '@/store/slices/connectionSlice';
 
 interface PaddleMovementConfig {
   speed: number;
@@ -29,6 +31,10 @@ export const usePaddleMovement = (
 
   const paddle = useAppSelector(state => 
     paddleId === 'left' ? state.game.leftPaddle : state.game.rightPaddle
+  );
+  
+  const dataChannelStatus = useAppSelector((state: { connection: ConnectionState }) => 
+    state.connection.dataChannelStatus
   );
 
   // Initialize positions
@@ -67,21 +73,29 @@ export const usePaddleMovement = (
 
   // Animation loop for smooth movement
   const updatePosition = useCallback(() => {
-    if (isMoving && currentPosition.current !== targetPosition.current) {
+    const positionChanged = Math.abs(currentPosition.current - targetPosition.current) > 0.1; 
+    
+    if (isMoving && positionChanged) {
       // Smooth transition using linear interpolation
       const delta = (targetPosition.current - currentPosition.current) * currentConfig.smoothing;
       currentPosition.current += delta;
-      
+      const roundedPosition = Math.round(currentPosition.current);
+
       // Update paddle position in Redux store
       dispatch(updatePaddle({
         player: paddleId,
-        position: Math.round(currentPosition.current)
+        position: roundedPosition
       }));
+      
+      // Send position update over data channel if open
+      if (dataChannelStatus === 'open') {
+        webRTCService.sendGameData({ type: 'paddleMove', payload: { y: roundedPosition } });
+      }
     }
     
     // Continue the animation loop
     animationFrameId.current = window.requestAnimationFrame(updatePosition);
-  }, [dispatch, paddleId, currentConfig.smoothing, isMoving]);
+  }, [dispatch, paddleId, currentConfig.smoothing, isMoving, dataChannelStatus]);
 
   // Set up event listeners and animation loop
   useEffect(() => {

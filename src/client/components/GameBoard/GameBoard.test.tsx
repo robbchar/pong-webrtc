@@ -1,8 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { configureStore } from '@reduxjs/toolkit';
-import gameReducer, { GameStatus } from '@/store/slices/gameSlice';
+import { configureStore, Store } from '@reduxjs/toolkit';
+import gameReducer, { GameStatus, GameState } from '@/store/slices/gameSlice';
+import connectionReducer, { ConnectionState } from '@/store/slices/connectionSlice';
+import { SignalingStatus } from '@/types/signalingTypes';
 import GameBoard from './GameBoard';
 import styles from './GameBoard.module.css';
 import useDeviceOrientation from '@/hooks/useDeviceOrientation';
@@ -26,51 +28,45 @@ vi.mock('@/hooks/useDeviceOrientation', () => ({
 }));
 
 describe('GameBoard', () => {
-  const createMockStore = (initialState: Partial<{
-    status: GameStatus;
-    ball: { x: number; y: number; velocityX: number; velocityY: number };
-    leftPaddle: { y: number };
-    rightPaddle: { y: number };
-    score: { left: number; right: number };
-    wins: { left: number; right: number };
-    countdown: number;
-    isReady: boolean;
-  }> = {}) => {
-    const defaultState = {
-      status: 'waiting' as GameStatus,
-      ball: {
-        x: 50,
-        y: 50,
-        velocityX: 0,
-        velocityY: 0,
-      },
-      leftPaddle: {
-        y: 50,
-      },
-      rightPaddle: {
-        y: 50,
-      },
-      score: {
-        left: 0,
-        right: 0,
-      },
-      wins: {
-        left: 0,
-        right: 0,
-      },
+  const createMockStore = (initialStateOverrides: { 
+    game?: Partial<GameState>,
+    connection?: Partial<ConnectionState>
+  } = {}) => {
+    
+    const defaultGameState: GameState = {
+      status: 'waiting',
+      ball: { x: 50, y: 50, velocityX: 0, velocityY: 0 },
+      leftPaddle: { y: 50 },
+      rightPaddle: { y: 50 },
+      score: { left: 0, right: 0 },
+      wins: { left: 0, right: 0 },
       countdown: 5,
       isReady: false,
+    };
+    
+    const defaultConnectionState: ConnectionState = {
+      signalingStatus: SignalingStatus.CLOSED,
+      peerStatus: 'idle',
+      dataChannelStatus: 'closed',
+      peerId: null,
+      isHost: false,
+      error: null,
     };
 
     return configureStore({
       reducer: {
         game: gameReducer,
+        connection: connectionReducer,
       },
       preloadedState: {
         game: {
-          ...defaultState,
-          ...initialState,
+          ...defaultGameState,
+          ...(initialStateOverrides.game || {}),
         },
+        connection: {
+          ...defaultConnectionState,
+          ...(initialStateOverrides.connection || {}),
+        }
       },
     });
   };
@@ -90,39 +86,35 @@ describe('GameBoard', () => {
   });
 
   it('should show waiting text in waiting state', () => {
-    renderWithStore(createMockStore({ status: 'waiting', isReady: false }));
+    renderWithStore(createMockStore({ game: { status: 'waiting', isReady: false } }));
     expect(screen.getByText('Waiting for opponent...')).toBeInTheDocument();
     expect(screen.queryByText('READY')).not.toBeInTheDocument();
   });
 
   it('should not show waiting text or ready button when ready', () => {
-    // Note: This state might not be reachable currently, but test remains for future
-    renderWithStore(createMockStore({ status: 'waiting', isReady: true }));
-    // The component shows waiting text whenever status is 'waiting', 
-    // so we don't check for its absence here in this transient state.
-    // expect(screen.queryByText('Waiting for opponent...')).not.toBeInTheDocument();
+    renderWithStore(createMockStore({ game: { status: 'waiting', isReady: true } }));
     expect(screen.queryByText('READY')).not.toBeInTheDocument(); 
   });
 
   it('should show countdown when in countdown state', () => {
-    renderWithStore(createMockStore({ status: 'countdown', countdown: 3 }));
+    renderWithStore(createMockStore({ game: { status: 'countdown', countdown: 3 } }));
     expect(screen.getByTestId('countdown')).toBeInTheDocument();
     expect(screen.getByTestId('countdown')).toHaveTextContent('3');
   });
 
   it('should show pause button during gameplay', async () => {
-    renderWithStore(createMockStore({ status: 'playing' }));
+    renderWithStore(createMockStore({ game: { status: 'playing' } }));
     expect(await screen.findByText('PAUSE')).toBeInTheDocument();
   });
 
   it('should show pause overlay when game is paused', () => {
-    renderWithStore(createMockStore({ status: 'paused' }));
+    renderWithStore(createMockStore({ game: { status: 'paused' } }));
     expect(screen.getByText('PAUSED')).toBeInTheDocument();
     expect(screen.getByText('RESUME')).toBeInTheDocument();
   });
 
   it('should show game over when game is finished', () => {
-    renderWithStore(createMockStore({ status: 'gameOver' }));
+    renderWithStore(createMockStore({ game: { status: 'gameOver' } }));
     expect(screen.getByTestId('game-over')).toBeInTheDocument();
   });
 
@@ -164,23 +156,21 @@ describe('GameBoard', () => {
   });
 
   it('should display win ticks for left player', () => {
-    const store = createMockStore({ wins: { left: 2, right: 0 } });
+    const store = createMockStore({ game: { wins: { left: 2, right: 0 } } });
     renderWithStore(store);
     const ticks = screen.getAllByText('✓');
     expect(ticks).toHaveLength(2);
   });
 
   it('should display win ticks for right player', () => {
-    const store = createMockStore({ wins: { left: 0, right: 3 } });
+    const store = createMockStore({ game: { wins: { left: 0, right: 3 } } });
     renderWithStore(store);
     const ticks = screen.getAllByText('✓');
     expect(ticks).toHaveLength(3);
   });
 
   it('should display current scores', () => {
-    const store = createMockStore({ 
-      score: { left: 5, right: 3 } 
-    });
+    const store = createMockStore({ game: { score: { left: 5, right: 3 } } });
     renderWithStore(store);
     const scores = screen.getAllByText(/[0-9]/);
     expect(scores[0]).toHaveTextContent('5');
@@ -188,26 +178,25 @@ describe('GameBoard', () => {
   });
 
   it('should show game over and winner when score reaches 10', () => {
-    const store = createMockStore({ 
-      status: 'gameOver',
-      score: { left: 10, right: 5 } 
-    });
+    const store = createMockStore({ game: { status: 'gameOver', score: { left: 10, right: 5 } } });
     renderWithStore(store);
     expect(screen.getByText('GAME OVER')).toBeInTheDocument();
     expect(screen.getByText('Left Player Wins!')).toBeInTheDocument();
   });
 
   it('should show restart button after game over', () => {
-    const store = createMockStore({ status: 'gameOver' });
+    const store = createMockStore({ game: { status: 'gameOver' } });
     renderWithStore(store);
     expect(screen.getByText('PLAY AGAIN')).toBeInTheDocument();
   });
 
   it('should reset game when restart button is clicked', () => {
     const store = createMockStore({ 
-      status: 'gameOver',
-      score: { left: 10, right: 5 },
-      wins: { left: 1, right: 0 }
+      game: {
+        status: 'gameOver',
+        score: { left: 10, right: 5 },
+        wins: { left: 1, right: 0 }
+      }
     });
     renderWithStore(store);
     
@@ -218,5 +207,19 @@ describe('GameBoard', () => {
     expect(state.score.left).toBe(0);
     expect(state.score.right).toBe(0);
     expect(state.wins.left).toBe(1); // Wins should persist
+  });
+
+  it('should handle pause button click', async () => {
+    const store = createMockStore({ game: { status: 'playing' } });
+    renderWithStore(store);
+    fireEvent.click(await screen.findByText('PAUSE'));
+    expect(store.getState().game.status).toBe('paused');
+  });
+
+  it('should handle resume button click', async () => {
+    const store = createMockStore({ game: { status: 'paused' } });
+    renderWithStore(store);
+    fireEvent.click(await screen.findByText('RESUME'));
+    expect(store.getState().game.status).toBe('playing');
   });
 }); 

@@ -6,6 +6,7 @@ import {
   setError 
 } from '@/store/slices/connectionSlice';
 import { SignalingStatus } from '@/types/signalingTypes';
+import { webRTCService } from './webRTCService'; // Import the new service
 
 // Define the structure for messages (mirroring server)
 interface SignalingMessage {
@@ -144,24 +145,51 @@ class SignalingService {
     switch (message.type) {
       case 'paired':
         console.log('Paired with opponent:', message.payload.opponentId, 'Is Host:', message.payload.isHost);
-        this.dispatch(setPeerConnected({ 
+        const peerPayload = { 
           peerId: message.payload.opponentId, 
           isHost: message.payload.isHost 
-        }));
+        };
+        this.dispatch(setPeerConnected(peerPayload));
+        // Initialize WebRTC connection now that we have a peer, passing dispatch
+        if (this.dispatch) {
+          webRTCService.initialize(peerPayload.isHost, peerPayload.peerId, this.dispatch);
+        } else {
+            console.error("Signaling service dispatch not available for WebRTC initialization");
+        }
         break;
       case 'opponentLeft':
         console.log('Opponent disconnected.');
         this.dispatch(setPeerDisconnected());
+        // Clean up the WebRTC connection
+        webRTCService.closeConnection(); 
         break;
       case 'offer':
+        if (message.payload?.sdp) {
+          console.log(`Received offer from ${message.senderId}`);
+          webRTCService.handleRemoteOffer(message.payload); // Pass the whole payload {sdp: ...}
+        } else {
+          console.warn('Received invalid offer message:', message.payload);
+        }
+        break;
       case 'answer':
-      case 'candidate':
-        // TODO: Handle WebRTC signaling messages - pass to WebRTC service/logic
-        console.log(`Received ${message.type} from ${message.senderId}`);
+        if (message.payload?.sdp) {
+          console.log(`Received answer from ${message.senderId}`);
+          webRTCService.handleRemoteAnswer(message.payload); // Pass the whole payload {sdp: ...}
+        } else {
+          console.warn('Received invalid answer message:', message.payload);
+        }
         break;
       case 'error':
         console.error('Received error from server:', message.payload);
         this.dispatch(setError(message.payload || 'Unknown server error'));
+        break;
+      case 'candidate':
+        if (message.payload?.candidate) {
+          console.log(`Received remote candidate from ${message.senderId}`);
+          webRTCService.handleRemoteCandidate(message.payload.candidate);
+        } else {
+          console.warn('Received invalid candidate message:', message.payload);
+        }
         break;
       default:
         console.warn('Received unknown message type:', message.type);

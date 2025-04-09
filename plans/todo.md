@@ -63,8 +63,8 @@
   - [x] Relay WebRTC connection data
   - [x] Handle disconnections
 - [ ] Implement WebRTC connection
-  - [ ] Create peer connection with Google's STUN server
-  - [ ] Implement data channel for game data
+  - [x] Create peer connection with Google's STUN server
+  - [x] Implement data channel for game data
   - [ ] Handle connection state changes
   - [ ] Create offer/answer exchange logic
 - [ ] Implement host-authority game model
@@ -111,3 +111,4 @@
   - [ ] Deploy signaling server
   - [ ] Set up HTTPS for WebRTC
   - [ ] Deploy frontend to hosting service (Vercel, etc.)
+- [ ] Thik about refactoring connection logic in reducers to middleware

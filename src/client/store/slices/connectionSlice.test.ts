@@ -6,13 +6,14 @@ import connectionReducer, {
   setError, 
   clearError 
 } from './connectionSlice';
-import type { ConnectionState } from './connectionSlice';
+import type { ConnectionState, DataChannelStatus } from './connectionSlice';
 import { SignalingStatus } from '@/types/signalingTypes';
 
-// Define the correct initial state structure
-const initialState: ConnectionState = {
+// Define the correct initial state structure, explicitly casting peerStatus
+const initialState = {
   signalingStatus: SignalingStatus.CLOSED,
-  peerStatus: 'idle',
+  peerStatus: 'idle' as ConnectionState['peerStatus'], // Explicit cast
+  dataChannelStatus: 'closed' as DataChannelStatus, // Explicit cast
   peerId: null,
   isHost: false,
   error: null,

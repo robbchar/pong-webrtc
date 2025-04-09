@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export type GameStatus = 'waiting' | 'countdown' | 'playing' | 'paused' | 'gameOver';
 
-interface GameState {
+export interface GameState {
   status: GameStatus;
   ball: {
     x: number;
@@ -70,6 +70,10 @@ const gameSlice = createSlice({
     updateRightPaddle: (state, action: PayloadAction<number>) => {
       state.rightPaddle.y = action.payload;
     },
+    updateOpponentPaddle: (state, action: PayloadAction<{ y: number }>) => {
+      console.warn("updateOpponentPaddle needs logic to determine which paddle to update!");
+      state.rightPaddle.y = action.payload.y;
+    },
     updateScore: (state, action: PayloadAction<{ player: 'left' | 'right'; points: number }>) => {
       const { player, points } = action.payload;
       state.score[player] = points;
@@ -104,6 +108,7 @@ export const {
   updateBall,
   updateLeftPaddle,
   updateRightPaddle,
+  updateOpponentPaddle,
   updateScore,
   resetGame,
   setCountdown,

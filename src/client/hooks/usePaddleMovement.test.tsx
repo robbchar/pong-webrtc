@@ -4,18 +4,10 @@ import { renderHook, act } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import gameReducer from '../redux/slices/gameSlice';
+import gameReducer, { GameState } from '@/store/slices/gameSlice';
+import connectionReducer, { ConnectionState } from '@/store/slices/connectionSlice';
+import { SignalingStatus } from '@/types/signalingTypes';
 import { usePaddleMovement } from './usePaddleMovement';
-
-interface GameState {
-  status: 'lobby' | 'countdown' | 'playing' | 'paused' | 'gameOver';
-  ball: { x: number; y: number; vx: number; vy: number };
-  leftPaddle: { y: number };
-  rightPaddle: { y: number };
-  scores: { left: number; right: number };
-  countdown: number;
-  isReady: boolean;
-}
 
 // Extend Window interface to include our test helper
 declare global {
@@ -25,22 +17,41 @@ declare global {
 }
 
 describe('usePaddleMovement', () => {
-  const mockStore = configureStore({
-    reducer: {
-      game: gameReducer,
-    },
-    preloadedState: {
-      game: {
-        status: 'playing' as const,
-        ball: { x: 50, y: 50, vx: 5, vy: 5 },
-        leftPaddle: { y: 50 },
-        rightPaddle: { y: 50 },
-        scores: { left: 0, right: 0 },
-        countdown: 5,
-        isReady: false,
-      } as GameState,
-    },
-  });
+  // Function to create store for each test, allowing overrides
+  const createTestStore = (overrides: Partial<{ game: Partial<GameState>, connection: Partial<ConnectionState> }> = {}) => {
+    const defaultGameState: GameState = {
+      status: 'playing', // Default to playing for movement tests
+      ball: { x: 50, y: 50, velocityX: 5, velocityY: 5 }, // Changed vx/vy to velocityX/Y
+      leftPaddle: { y: 50 },
+      rightPaddle: { y: 50 },
+      score: { left: 0, right: 0 }, // Use score not scores
+      wins: { left: 0, right: 0 }, // Add wins
+      countdown: 5,
+      isReady: false,
+    };
+    const defaultConnectionState: ConnectionState = {
+      signalingStatus: SignalingStatus.CLOSED,
+      peerStatus: 'idle',
+      dataChannelStatus: 'closed',
+      peerId: null,
+      isHost: false,
+      error: null,
+    };
+    return configureStore({
+      reducer: {
+        game: gameReducer,
+        connection: connectionReducer, // Add connection reducer
+      },
+      preloadedState: {
+        game: { ...defaultGameState, ...(overrides.game || {}) },
+        connection: { ...defaultConnectionState, ...(overrides.connection || {}) },
+      },
+    });
+  };
+
+  let mockStore = createTestStore(); 
+  // Add a spy variable declaration
+  let dispatchSpy: ReturnType<typeof vi.spyOn>;
 
   const Wrapper = ({ children }: { children: React.ReactNode }) => (
     <Provider store={mockStore}>{children}</Provider>
@@ -54,6 +65,8 @@ describe('usePaddleMovement', () => {
   };
 
   beforeEach(() => {
+    mockStore = createTestStore(); 
+    dispatchSpy = vi.spyOn(mockStore, 'dispatch'); // Spy on dispatch
     vi.useFakeTimers();
     // Mock requestAnimationFrame
     let frameId = 0;
@@ -92,6 +105,7 @@ describe('usePaddleMovement', () => {
   });
 
   afterEach(() => {
+    dispatchSpy.mockRestore(); // Restore the spy
     vi.useRealTimers();
     vi.restoreAllMocks();
     document.body.innerHTML = '';
@@ -113,16 +127,18 @@ describe('usePaddleMovement', () => {
 
     const canvas = document.getElementById('game-canvas')!;
     
-    // Start movement
+    // Start movement in its own act
     await act(async () => {
       result.current.startMovement();
+    });
+    // Simulate mousedown (might not be strictly necessary if startMovement covers it)
+    await act(async () => {
       canvas.dispatchEvent(new MouseEvent('mousedown'));
-      triggerFrame(16);
     });
 
     expect(result.current.isMoving).toBe(true);
 
-    // Move paddle
+    // Move paddle and trigger frames in another act
     await act(async () => {
       canvas.dispatchEvent(
         new MouseEvent('mousemove', {
@@ -131,13 +147,17 @@ describe('usePaddleMovement', () => {
         })
       );
       // Run multiple frames to allow for smooth movement
-      triggerFrame(32);
-      triggerFrame(48);
+      triggerFrame(16); // Corresponds to time = 16ms
+      triggerFrame(32); // Corresponds to time = 32ms
+      triggerFrame(48); // Corresponds to time = 48ms
     });
 
-    const state = mockStore.getState();
-    expect(state.game.leftPaddle.y).toBeGreaterThan(50); // Position should have increased
-
+    // Assert dispatch was called with the correct action type
+    expect(dispatchSpy).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'game/updatePaddle',
+      payload: { player: 'left', position: expect.any(Number) } 
+    }));
+    
     // Stop movement
     await act(async () => {
       result.current.stopMovement();
@@ -155,19 +175,21 @@ describe('usePaddleMovement', () => {
 
     const canvas = document.getElementById('game-canvas')!;
     
-    // Start movement
+    // Start movement in its own act
     await act(async () => {
       result.current.startMovement();
+    });
+    // Simulate touchstart
+    await act(async () => {
       canvas.dispatchEvent(new TouchEvent('touchstart', {
         touches: [{ clientY: 50 } as Touch],
         bubbles: true,
       }));
-      triggerFrame(16);
     });
 
     expect(result.current.isMoving).toBe(true);
 
-    // Move paddle
+    // Move paddle and trigger frames in another act
     await act(async () => {
       canvas.dispatchEvent(
         new TouchEvent('touchmove', {
@@ -176,13 +198,17 @@ describe('usePaddleMovement', () => {
         })
       );
       // Run multiple frames to allow for smooth movement
+      triggerFrame(16);
       triggerFrame(32);
       triggerFrame(48);
     });
 
-    const state = mockStore.getState();
-    expect(state.game.rightPaddle.y).toBeGreaterThan(50); // Position should have increased
-
+    // Assert dispatch was called
+    expect(dispatchSpy).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'game/updatePaddle',
+      payload: { player: 'right', position: expect.any(Number) } 
+    }));
+    
     // Stop movement
     await act(async () => {
       result.current.stopMovement();

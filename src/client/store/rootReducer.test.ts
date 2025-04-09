@@ -34,6 +34,7 @@ describe('rootReducer', () => {
     connection: {
       signalingStatus: SignalingStatus.CLOSED,
       peerStatus: 'idle',
+      dataChannelStatus: 'closed',
       peerId: null,
       isHost: false,
       error: null,
