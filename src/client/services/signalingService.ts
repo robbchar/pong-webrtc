@@ -181,8 +181,8 @@ class SignalingService {
 
   // Send a message to the server
   public sendMessage(type: string, payload?: any): void {
-    if (!this.ws) {
-        console.error('[WebSocket] No WebSocket connection exists');
+    if (!this.ws || !this.dispatch) {
+        console.error('[WebSocket] No WebSocket connection exists or dispatch not initialized');
         return;
     }
     
@@ -213,7 +213,9 @@ class SignalingService {
         console.log('[WebSocket] Message sent successfully');
     } catch (error) {
         console.error('[WebSocket] Error sending message:', error);
-        this.dispatch?.(setError('Failed to send message.'));
+        if (this.dispatch) {
+            this.dispatch(setError('Failed to send message.'));
+        }
     }
   }
 
@@ -247,7 +249,7 @@ class SignalingService {
             console.log('[WebSocket] Delaying WebRTC setup until connection is stable');
             // Wait for connection to stabilize
             const checkAndSetup = () => {
-                if (this.ws?.readyState === WebSocket.OPEN) {
+                if (this.ws?.readyState === WebSocket.OPEN && this.dispatch) {
                     this.dispatch(setPeerConnected({ 
                         peerId: message.payload.opponentId, 
                         isHost: message.payload.isHost 
@@ -330,7 +332,9 @@ class SignalingService {
 
       case 'error':
         console.error('[WebSocket] Server error:', message.payload);
-        this.dispatch(setError(message.payload || 'Unknown server error'));
+        if (this.dispatch) {
+          this.dispatch(setError(message.payload || 'Unknown server error'));
+        }
         break;
 
       default:
