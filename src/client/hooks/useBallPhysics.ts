@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { RootState } from '../redux/store';
 import { updateBall, scorePoint } from '../redux/slices/gameSlice';
-import { useAppDispatch, useAppSelector } from '../redux/hooks';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
 
 interface Vector2D {
   x: number;

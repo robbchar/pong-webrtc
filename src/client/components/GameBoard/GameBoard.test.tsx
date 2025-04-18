@@ -85,15 +85,22 @@ describe('GameBoard', () => {
     expect(screen.getByTestId('center-line')).toBeInTheDocument();
   });
 
-  it('should show waiting text in waiting state', () => {
-    renderWithStore(createMockStore({ game: { status: 'waiting', isReady: false } }));
+  it('should show waiting text when waiting and peer not connected', () => {
+    renderWithStore(createMockStore({ 
+      game: { status: 'waiting' }, 
+      connection: { peerStatus: 'idle' } 
+    }));
     expect(screen.getByText('Waiting for opponent...')).toBeInTheDocument();
-    expect(screen.queryByText('READY')).not.toBeInTheDocument();
+    expect(screen.queryByText('READY')).not.toBeInTheDocument(); 
   });
 
-  it('should not show waiting text or ready button when ready', () => {
-    renderWithStore(createMockStore({ game: { status: 'waiting', isReady: true } }));
-    expect(screen.queryByText('READY')).not.toBeInTheDocument(); 
+  it('should show READY button when waiting and peer is connected', () => {
+    renderWithStore(createMockStore({ 
+      game: { status: 'waiting' }, 
+      connection: { peerStatus: 'connected' } 
+    }));
+    expect(screen.queryByText('Waiting for opponent...')).not.toBeInTheDocument(); 
+    expect(screen.getByText('READY')).toBeInTheDocument();
   });
 
   it('should show countdown when in countdown state', () => {

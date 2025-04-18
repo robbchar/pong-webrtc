@@ -9,19 +9,21 @@ export type DataChannelStatus = 'opening' | 'open' | 'closing' | 'closed';
 
 export interface ConnectionState {
   signalingStatus: SignalingStatus; // Track WS connection
-  peerStatus: 'idle' | 'connected' | 'disconnected' | 'connecting' | 'failed'; // Expanded peer status
-  dataChannelStatus: DataChannelStatus; // Added data channel status
+  peerStatus: 'idle' | 'connecting' | 'connected' | 'failed' | 'disconnected';
   peerId: string | null;
-  isHost: boolean; // Are we the one initiating the WebRTC offer?
+  isHost: boolean | null;
+  gameId: string | null;
+  dataChannelStatus: 'closed' | 'connecting' | 'open' | 'error';
   error: string | null;
 }
 
 const initialState: ConnectionState = {
   signalingStatus: SignalingStatus.CLOSED,
   peerStatus: 'idle',
-  dataChannelStatus: 'closed', // Initial state
   peerId: null,
-  isHost: false,
+  isHost: null,
+  gameId: null,
+  dataChannelStatus: 'closed',
   error: null,
 };
 
@@ -43,7 +45,7 @@ const connectionSlice = createSlice({
     },
     setPeerDisconnected: (state) => {
       state.peerId = null;
-      state.isHost = false;
+      state.isHost = null;
       state.peerStatus = 'disconnected';
       state.dataChannelStatus = 'closed'; // Close data channel on peer disconnect
     },
@@ -51,7 +53,7 @@ const connectionSlice = createSlice({
       state.peerStatus = 'failed';
       state.dataChannelStatus = 'closed';
     },
-    setDataChannelStatus: (state, action: PayloadAction<DataChannelStatus>) => {
+    setDataChannelStatus: (state, action: PayloadAction<ConnectionState['dataChannelStatus']>) => {
       state.dataChannelStatus = action.payload;
     },
     setError: (state, action: PayloadAction<string>) => {
@@ -59,6 +61,12 @@ const connectionSlice = createSlice({
     },
     clearError: (state) => {
       state.error = null;
+    },
+    setGameId: (state, action: PayloadAction<string>) => {
+      state.gameId = action.payload;
+    },
+    setIsHost: (state, action: PayloadAction<boolean>) => {
+      state.isHost = action.payload;
     },
     // We might add specific peer connection status updates later (e.g., connecting, failed)
   },
@@ -73,5 +81,7 @@ export const {
   setDataChannelStatus,
   setError,
   clearError,
+  setGameId,
+  setIsHost,
 } = connectionSlice.actions;
 export default connectionSlice.reducer; 

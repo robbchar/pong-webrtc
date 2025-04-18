@@ -26,6 +26,7 @@ export interface GameState {
   };
   countdown: number;
   isReady: boolean;
+  opponentReady: boolean;
 }
 
 const initialState: GameState = {
@@ -52,6 +53,7 @@ const initialState: GameState = {
   },
   countdown: 5,
   isReady: false,
+  opponentReady: false,
 };
 
 const gameSlice = createSlice({
@@ -92,6 +94,7 @@ const gameSlice = createSlice({
         score: { ...initialState.score },
         countdown: initialState.countdown,
         isReady: false,
+        opponentReady: false,
       };
     },
     setCountdown: (state, action: PayloadAction<number>) => {
@@ -99,6 +102,23 @@ const gameSlice = createSlice({
     },
     setReady: (state, action: PayloadAction<boolean>) => {
       state.isReady = action.payload;
+      // If both players are ready, start the countdown
+      if (state.isReady && state.opponentReady) {
+        state.status = 'countdown';
+      } else if (state.status === 'countdown' && !state.isReady) {
+        // If a player becomes not ready during countdown, go back to waiting
+        state.status = 'waiting';
+      }
+    },
+    setOpponentReady: (state, action: PayloadAction<boolean>) => {
+      state.opponentReady = action.payload;
+      // If both players are ready, start the countdown
+      if (state.isReady && state.opponentReady) {
+        state.status = 'countdown';
+      } else if (state.status === 'countdown' && !state.opponentReady) {
+        // If a player becomes not ready during countdown, go back to waiting
+        state.status = 'waiting';
+      }
     },
   },
 });
@@ -113,6 +133,7 @@ export const {
   resetGame,
   setCountdown,
   setReady,
+  setOpponentReady,
 } = gameSlice.actions;
 
 export default gameSlice.reducer; 

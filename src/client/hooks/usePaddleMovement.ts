@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useAppDispatch, useAppSelector } from '../redux/hooks';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { updatePaddle } from '../redux/slices/gameSlice';
 import { webRTCService } from '@/services/webRTCService';
 import { ConnectionState } from '@/store/slices/connectionSlice';
