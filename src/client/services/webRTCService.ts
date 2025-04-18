@@ -296,8 +296,11 @@ export class WebRTCService {
   }
 
   public async handleRemoteAnswer(answer: RTCSessionDescriptionInit): Promise<void> {
-    if (!this.peerConnection) {
-      console.warn('[RTCPeerConnection] No peer connection to handle answer');
+    if (!this.peerConnection || !this.dispatch) {
+      console.warn('[RTCPeerConnection] Cannot handle remote answer:', {
+        hasPeerConnection: !!this.peerConnection,
+        hasDispatch: !!this.dispatch
+      });
       return;
     }
 
@@ -305,21 +308,26 @@ export class WebRTCService {
       console.log('[RTCPeerConnection] Handling remote answer...');
       await this.peerConnection.setRemoteDescription(answer);
     } catch (error) {
-      console.error('[RTCPeerConnection] Error handling answer:', error);
+      console.error('[RTCPeerConnection] Error handling remote answer:', error);
+      this.dispatch(setPeerFailed());
     }
   }
 
   public async handleRemoteCandidate(candidate: RTCIceCandidateInit): Promise<void> {
-    if (!this.peerConnection) {
-      console.warn('[RTCPeerConnection] No peer connection to handle candidate');
+    if (!this.peerConnection || !this.dispatch) {
+      console.warn('[RTCPeerConnection] Cannot handle remote candidate:', {
+        hasPeerConnection: !!this.peerConnection,
+        hasDispatch: !!this.dispatch
+      });
       return;
     }
 
     try {
-      console.log('[RTCPeerConnection] Adding ICE candidate...');
+      console.log('[RTCPeerConnection] Adding remote ICE candidate...');
       await this.peerConnection.addIceCandidate(candidate);
     } catch (error) {
-      console.error('[RTCPeerConnection] Error adding ICE candidate:', error);
+      console.error('[RTCPeerConnection] Error adding remote ICE candidate:', error);
+      this.dispatch(setPeerFailed());
     }
   }
 
