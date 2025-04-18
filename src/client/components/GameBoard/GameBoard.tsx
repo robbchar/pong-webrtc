@@ -1,25 +1,20 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store/store';
-import { setReady, setGameStatus, resetGame } from '@/store/slices/gameSlice';
+import { setReady, setGameStatus } from '@/store/slices/gameSlice';
 import Paddle from '../Paddle/Paddle';
 import Ball from '../Ball/Ball';
 import { useBallMovement } from '@/hooks/useBallMovement';
 import { useCountdown } from '@/hooks/useCountdown';
 import useDeviceOrientation from '@/hooks/useDeviceOrientation';
 import styles from './GameBoard.module.css';
-import sharedStyles from '@/styles/shared.module.css';
-import { usePaddleMovement } from '@/hooks/usePaddleMovement';
 import { webRTCService } from '@/services/webRTCService';
-import { signalingService } from '@/services/signalingService';
 
 const GameBoard: React.FC = () => {
   const dispatch = useDispatch();
   const { 
     status, 
     isReady, 
-    opponentReady, 
-    countdown,
     score,
     wins
   } = useSelector((state: RootState) => state.game);

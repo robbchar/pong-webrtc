@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { configureStore, Store } from '@reduxjs/toolkit';
-import gameReducer, { GameStatus, GameState } from '@/store/slices/gameSlice';
+import { configureStore } from '@reduxjs/toolkit';
+import gameReducer, { GameState } from '@/store/slices/gameSlice';
 import connectionReducer, { ConnectionState } from '@/store/slices/connectionSlice';
 import { SignalingStatus } from '@/types/signalingTypes';
 import GameBoard from './GameBoard';
@@ -42,6 +42,7 @@ describe('GameBoard', () => {
       wins: { left: 0, right: 0 },
       countdown: 5,
       isReady: false,
+      opponentReady: false,
     };
     
     const defaultConnectionState: ConnectionState = {
@@ -50,6 +51,7 @@ describe('GameBoard', () => {
       dataChannelStatus: 'closed',
       peerId: null,
       isHost: false,
+      gameId: null,
       error: null,
     };
 

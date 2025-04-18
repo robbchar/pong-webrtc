@@ -7,8 +7,7 @@ import {
     setPeerConnecting, 
     setPeerFailed, 
     setPeerDisconnected,
-    setPeerConnected,
-    ConnectionState
+    setPeerConnected
 } from '@/store/slices/connectionSlice';
 
 // Configuration for STUN servers (Google's public servers)
@@ -49,6 +48,11 @@ export class WebRTCService {
   public async setupConnection(isHost: boolean, opponentId: string): Promise<void> {
     console.log('[RTCPeerConnection] Setting up connection:', { isHost, opponentId });
     
+    if (!this.dispatch) {
+      console.error('[RTCPeerConnection] Dispatch not initialized');
+      return;
+    }
+
     if (this.peerConnection) {
       console.log('[RTCPeerConnection] Connection already exists, cleaning up...');
       this.cleanup();
@@ -62,7 +66,6 @@ export class WebRTCService {
           if (signalingService.getStatus() === SignalingStatus.OPEN) {
             // Add a small delay after connection is confirmed open
             setTimeout(resolve, 500);
-            resolve();
           } else {
             setTimeout(checkConnection, 100);
           }
@@ -81,14 +84,22 @@ export class WebRTCService {
 
     if (isHost) {
       console.log('[RTCDataChannel] Creating data channel as host...');
-      this.dataChannel = this.peerConnection!.createDataChannel('gameData', {
+      if (!this.peerConnection) {
+        console.error('[RTCPeerConnection] Peer connection not initialized');
+        return;
+      }
+      this.dataChannel = this.peerConnection.createDataChannel('gameData', {
         ordered: true
       });
       this.setupDataChannelListeners();
       await this.createAndSendOffer();
     } else {
       console.log('[RTCPeerConnection] Waiting for data channel from host...');
-      this.peerConnection!.ondatachannel = (event) => {
+      if (!this.peerConnection) {
+        console.error('[RTCPeerConnection] Peer connection not initialized');
+        return;
+      }
+      this.peerConnection.ondatachannel = (event) => {
         console.log('[RTCDataChannel] Received data channel from host');
         this.dataChannel = event.channel;
         this.setupDataChannelListeners();
@@ -151,10 +162,18 @@ export class WebRTCService {
   }
 
   public handleReadyForOffer(fromId: string): void {
-    if (!this.isHost || fromId !== this.opponentId) return;
+    if (!this.isHost || fromId !== this.opponentId || !this.peerConnection) {
+      console.warn('[RTCDataChannel] Cannot handle ready for offer:', {
+        isHost: this.isHost,
+        fromId,
+        opponentId: this.opponentId,
+        hasPeerConnection: !!this.peerConnection
+      });
+      return;
+    }
 
     console.log('[RTCDataChannel] Peer ready, creating data channel as host...');
-    this.dataChannel = this.peerConnection!.createDataChannel('gameData', {
+    this.dataChannel = this.peerConnection.createDataChannel('gameData', {
       ordered: true
     });
     this.setupDataChannelListeners();
@@ -162,11 +181,19 @@ export class WebRTCService {
   }
 
   private setupDataChannelListeners(): void {
-    if (!this.dataChannel) return;
+    if (!this.dataChannel || !this.dispatch) {
+      console.warn('[RTCDataChannel] Cannot setup listeners:', {
+        hasDataChannel: !!this.dataChannel,
+        hasDispatch: !!this.dispatch
+      });
+      return;
+    }
+
+    const dispatch = this.dispatch;
 
     this.dataChannel.onopen = () => {
       console.log('[RTCDataChannel] Channel opened');
-      this.dispatch?.(setDataChannelStatus('open'));
+      dispatch(setDataChannelStatus('open'));
       if (this._queuedReadyState !== null) {
         this.sendReadyState(this._queuedReadyState);
         this._queuedReadyState = null;
@@ -175,12 +202,12 @@ export class WebRTCService {
 
     this.dataChannel.onclose = () => {
       console.log('[RTCDataChannel] Channel closed');
-      this.dispatch?.(setDataChannelStatus('closed'));
+      dispatch(setDataChannelStatus('closed'));
     };
 
     this.dataChannel.onerror = (error) => {
       console.error('[RTCDataChannel] Error:', error);
-      this.dispatch?.(setDataChannelStatus('error'));
+      dispatch(setDataChannelStatus('error'));
     };
 
     this.dataChannel.onmessage = (event) => {
@@ -190,10 +217,10 @@ export class WebRTCService {
         
         switch (message.type) {
           case 'paddle':
-            this.dispatch?.(updateOpponentPaddle(message.data));
+            dispatch(updateOpponentPaddle(message.data));
             break;
           case 'ready':
-            this.dispatch?.(setOpponentReady(message.data));
+            dispatch(setOpponentReady(message.data));
             break;
           default:
             console.warn('[RTCDataChannel] Unknown message type:', message.type);
@@ -205,7 +232,14 @@ export class WebRTCService {
   }
 
   private async createAndSendOffer(): Promise<void> {
-    if (!this.peerConnection) return;
+    if (!this.peerConnection || !this.dispatch || !this.opponentId) {
+      console.warn('[RTCPeerConnection] Cannot create offer:', {
+        hasPeerConnection: !!this.peerConnection,
+        hasDispatch: !!this.dispatch,
+        hasOpponentId: !!this.opponentId
+      });
+      return;
+    }
 
     try {
       console.log('[RTCPeerConnection] Creating offer...');
@@ -229,14 +263,18 @@ export class WebRTCService {
         console.log(`[RTCPeerConnection] Retrying offer (${this.offerRetryCount}/${this.MAX_OFFER_RETRIES})...`);
         setTimeout(() => this.createAndSendOffer(), 1000);
       } else {
-        this.dispatch?.(setPeerFailed());
+        this.dispatch(setPeerFailed());
       }
     }
   }
 
   public async handleRemoteOffer(offer: RTCSessionDescriptionInit): Promise<void> {
-    if (!this.peerConnection) {
-      console.warn('[RTCPeerConnection] No peer connection to handle offer');
+    if (!this.peerConnection || !this.dispatch || !this.opponentId) {
+      console.warn('[RTCPeerConnection] Cannot handle remote offer:', {
+        hasPeerConnection: !!this.peerConnection,
+        hasDispatch: !!this.dispatch,
+        hasOpponentId: !!this.opponentId
+      });
       return;
     }
 
@@ -246,20 +284,22 @@ export class WebRTCService {
       const answer = await this.peerConnection.createAnswer();
       await this.peerConnection.setLocalDescription(answer);
 
-      if (this.opponentId) {
-        signalingService.sendMessage('answer', {
-          sdp: this.peerConnection.localDescription,
-          to: this.opponentId
-        });
-      }
+      signalingService.sendMessage('answer', {
+        sdp: this.peerConnection.localDescription,
+        to: this.opponentId
+      });
     } catch (error) {
-      console.error('[RTCPeerConnection] Error handling offer:', error);
+      console.error('[RTCPeerConnection] Error handling remote offer:', error);
+      this.dispatch(setPeerFailed());
     }
   }
 
   public async handleRemoteAnswer(answer: RTCSessionDescriptionInit): Promise<void> {
-    if (!this.peerConnection) {
-      console.warn('[RTCPeerConnection] No peer connection to handle answer');
+    if (!this.peerConnection || !this.dispatch) {
+      console.warn('[RTCPeerConnection] Cannot handle remote answer:', {
+        hasPeerConnection: !!this.peerConnection,
+        hasDispatch: !!this.dispatch
+      });
       return;
     }
 
@@ -267,21 +307,26 @@ export class WebRTCService {
       console.log('[RTCPeerConnection] Handling remote answer...');
       await this.peerConnection.setRemoteDescription(answer);
     } catch (error) {
-      console.error('[RTCPeerConnection] Error handling answer:', error);
+      console.error('[RTCPeerConnection] Error handling remote answer:', error);
+      this.dispatch(setPeerFailed());
     }
   }
 
   public async handleRemoteCandidate(candidate: RTCIceCandidateInit): Promise<void> {
-    if (!this.peerConnection) {
-      console.warn('[RTCPeerConnection] No peer connection to handle candidate');
+    if (!this.peerConnection || !this.dispatch) {
+      console.warn('[RTCPeerConnection] Cannot handle remote candidate:', {
+        hasPeerConnection: !!this.peerConnection,
+        hasDispatch: !!this.dispatch
+      });
       return;
     }
 
     try {
-      console.log('[RTCPeerConnection] Adding ICE candidate...');
+      console.log('[RTCPeerConnection] Adding remote ICE candidate...');
       await this.peerConnection.addIceCandidate(candidate);
     } catch (error) {
-      console.error('[RTCPeerConnection] Error adding ICE candidate:', error);
+      console.error('[RTCPeerConnection] Error adding remote ICE candidate:', error);
+      this.dispatch(setPeerFailed());
     }
   }
 

@@ -2,7 +2,6 @@ import { Dispatch } from '@reduxjs/toolkit';
 import { 
   setSignalingStatus, 
   setPeerConnected, 
-  setPeerDisconnected, 
   setError,
   setGameId,
   setIsHost
@@ -26,11 +25,9 @@ class SignalingService {
   private readonly MAX_RECONNECT_ATTEMPTS = 5;
   private readonly RECONNECT_DELAY_MS = 3000;
   private keepAliveInterval: NodeJS.Timeout | null = null;
-  private myId: string | null = null;
+  private clientId: string;
   private isHost: boolean = false;
   private isConnecting: boolean = false;
-  private clientId: string;
-  private gameId: string = '';
 
   private constructor() {
     this.clientId = crypto.randomUUID();
@@ -181,8 +178,8 @@ class SignalingService {
 
   // Send a message to the server
   public sendMessage(type: string, payload?: any): void {
-    if (!this.ws) {
-        console.error('[WebSocket] No WebSocket connection exists');
+    if (!this.ws || !this.dispatch) {
+        console.error('[WebSocket] No WebSocket connection exists or dispatch not initialized');
         return;
     }
     
@@ -213,7 +210,9 @@ class SignalingService {
         console.log('[WebSocket] Message sent successfully');
     } catch (error) {
         console.error('[WebSocket] Error sending message:', error);
-        this.dispatch?.(setError('Failed to send message.'));
+        if (this.dispatch) {
+            this.dispatch(setError('Failed to send message.'));
+        }
     }
   }
 
@@ -247,7 +246,7 @@ class SignalingService {
             console.log('[WebSocket] Delaying WebRTC setup until connection is stable');
             // Wait for connection to stabilize
             const checkAndSetup = () => {
-                if (this.ws?.readyState === WebSocket.OPEN) {
+                if (this.ws?.readyState === WebSocket.OPEN && this.dispatch) {
                     this.dispatch(setPeerConnected({ 
                         peerId: message.payload.opponentId, 
                         isHost: message.payload.isHost 
@@ -263,17 +262,15 @@ class SignalingService {
 
       case 'host_assigned':
         console.log('[WebSocket] Assigned as host for game:', message.payload.gameId);
-        this.gameId = message.payload.gameId;
-        this.isHost = true;
         this.dispatch(setGameId(message.payload.gameId));
+        this.isHost = true;
         this.dispatch(setIsHost(true));
         break;
 
       case 'join_game':
         console.log('[WebSocket] Joining game:', message.payload.gameId);
-        this.gameId = message.payload.gameId;
-        this.isHost = false;
         this.dispatch(setGameId(message.payload.gameId));
+        this.isHost = false;
         this.dispatch(setIsHost(false));
         break;
 
@@ -330,7 +327,9 @@ class SignalingService {
 
       case 'error':
         console.error('[WebSocket] Server error:', message.payload);
-        this.dispatch(setError(message.payload || 'Unknown server error'));
+        if (this.dispatch) {
+          this.dispatch(setError(message.payload || 'Unknown server error'));
+        }
         break;
 
       default:
