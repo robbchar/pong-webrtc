@@ -7,8 +7,7 @@ import {
     setPeerConnecting, 
     setPeerFailed, 
     setPeerDisconnected,
-    setPeerConnected,
-    ConnectionState
+    setPeerConnected
 } from '@/store/slices/connectionSlice';
 
 // Configuration for STUN servers (Google's public servers)

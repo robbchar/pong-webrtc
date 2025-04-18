@@ -2,7 +2,6 @@ import { Dispatch } from '@reduxjs/toolkit';
 import { 
   setSignalingStatus, 
   setPeerConnected, 
-  setPeerDisconnected, 
   setError,
   setGameId,
   setIsHost
@@ -26,11 +25,9 @@ class SignalingService {
   private readonly MAX_RECONNECT_ATTEMPTS = 5;
   private readonly RECONNECT_DELAY_MS = 3000;
   private keepAliveInterval: NodeJS.Timeout | null = null;
-  private myId: string | null = null;
+  private clientId: string;
   private isHost: boolean = false;
   private isConnecting: boolean = false;
-  private clientId: string;
-  private gameId: string = '';
 
   private constructor() {
     this.clientId = crypto.randomUUID();
@@ -265,17 +262,15 @@ class SignalingService {
 
       case 'host_assigned':
         console.log('[WebSocket] Assigned as host for game:', message.payload.gameId);
-        this.gameId = message.payload.gameId;
-        this.isHost = true;
         this.dispatch(setGameId(message.payload.gameId));
+        this.isHost = true;
         this.dispatch(setIsHost(true));
         break;
 
       case 'join_game':
         console.log('[WebSocket] Joining game:', message.payload.gameId);
-        this.gameId = message.payload.gameId;
-        this.isHost = false;
         this.dispatch(setGameId(message.payload.gameId));
+        this.isHost = false;
         this.dispatch(setIsHost(false));
         break;
 
