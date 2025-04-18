@@ -233,7 +233,14 @@ export class WebRTCService {
   }
 
   private async createAndSendOffer(): Promise<void> {
-    if (!this.peerConnection) return;
+    if (!this.peerConnection || !this.dispatch || !this.opponentId) {
+      console.warn('[RTCPeerConnection] Cannot create offer:', {
+        hasPeerConnection: !!this.peerConnection,
+        hasDispatch: !!this.dispatch,
+        hasOpponentId: !!this.opponentId
+      });
+      return;
+    }
 
     try {
       console.log('[RTCPeerConnection] Creating offer...');
@@ -257,14 +264,18 @@ export class WebRTCService {
         console.log(`[RTCPeerConnection] Retrying offer (${this.offerRetryCount}/${this.MAX_OFFER_RETRIES})...`);
         setTimeout(() => this.createAndSendOffer(), 1000);
       } else {
-        this.dispatch?.(setPeerFailed());
+        this.dispatch(setPeerFailed());
       }
     }
   }
 
   public async handleRemoteOffer(offer: RTCSessionDescriptionInit): Promise<void> {
-    if (!this.peerConnection) {
-      console.warn('[RTCPeerConnection] No peer connection to handle offer');
+    if (!this.peerConnection || !this.dispatch || !this.opponentId) {
+      console.warn('[RTCPeerConnection] Cannot handle remote offer:', {
+        hasPeerConnection: !!this.peerConnection,
+        hasDispatch: !!this.dispatch,
+        hasOpponentId: !!this.opponentId
+      });
       return;
     }
 
@@ -274,14 +285,13 @@ export class WebRTCService {
       const answer = await this.peerConnection.createAnswer();
       await this.peerConnection.setLocalDescription(answer);
 
-      if (this.opponentId) {
-        signalingService.sendMessage('answer', {
-          sdp: this.peerConnection.localDescription,
-          to: this.opponentId
-        });
-      }
+      signalingService.sendMessage('answer', {
+        sdp: this.peerConnection.localDescription,
+        to: this.opponentId
+      });
     } catch (error) {
-      console.error('[RTCPeerConnection] Error handling offer:', error);
+      console.error('[RTCPeerConnection] Error handling remote offer:', error);
+      this.dispatch(setPeerFailed());
     }
   }
 
