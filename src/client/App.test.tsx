@@ -5,6 +5,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import App from './App';
 import gameReducer, { GameStatus } from '@/store/slices/gameSlice';
 import connectionReducer from '@/store/slices/connectionSlice';
+import { SignalingStatus } from '@/types/signalingTypes';
 
 const createTestStore = () => {
   const defaultGameState = {
@@ -31,6 +32,7 @@ const createTestStore = () => {
     },
     countdown: 5,
     isReady: false,
+    opponentReady: false
   };
 
   return configureStore({
@@ -40,6 +42,15 @@ const createTestStore = () => {
     },
     preloadedState: {
       game: defaultGameState,
+      connection: {
+        signalingStatus: SignalingStatus.OPEN,
+        peerStatus: 'connected' as const,
+        peerId: 'test-peer',
+        isHost: true,
+        gameId: 'test-game',
+        dataChannelStatus: 'open' as const,
+        error: null
+      }
     },
   });
 };
@@ -52,7 +63,8 @@ describe('App', () => {
         <App />
       </Provider>
     );
-    expect(screen.getByText('Pong WebRTC')).toBeInTheDocument();
+    expect(screen.getByText('Ready')).toBeInTheDocument();
+    expect(screen.getByTestId('center-line')).toBeInTheDocument();
   });
 
   it('renders the game board', () => {
