@@ -27,6 +27,7 @@ describe('gameSlice', () => {
     },
     countdown: 5,
     isReady: false,
+    opponentReady: false,
   };
 
   it('should handle initial state', () => {
