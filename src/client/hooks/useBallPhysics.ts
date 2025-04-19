@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef } from 'react';
-import { RootState } from '@/store/store';
-import { updateBall, updateScore } from '@/store/slices/gameSlice';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { useCallback, useEffect, useRef } from "react";
+import { RootState } from "@/store/store";
+import { updateBall, updateScore } from "@/store/slices/gameSlice";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
 interface BallPhysicsConfig {
   speed: number;
@@ -20,8 +20,12 @@ const defaultConfig: BallPhysicsConfig = {
 export const useBallPhysics = (config: BallPhysicsConfig = defaultConfig) => {
   const dispatch = useAppDispatch();
   const ball = useAppSelector((state: RootState) => state.game.ball);
-  const leftPaddle = useAppSelector((state: RootState) => state.game.leftPaddle);
-  const rightPaddle = useAppSelector((state: RootState) => state.game.rightPaddle);
+  const leftPaddle = useAppSelector(
+    (state: RootState) => state.game.leftPaddle,
+  );
+  const rightPaddle = useAppSelector(
+    (state: RootState) => state.game.rightPaddle,
+  );
   const score = useAppSelector((state: RootState) => state.game.score);
   const gameStatus = useAppSelector((state: RootState) => state.game.status);
   const animationFrameRef = useRef<number>(0);
@@ -36,7 +40,7 @@ export const useBallPhysics = (config: BallPhysicsConfig = defaultConfig) => {
       },
       leftPaddle: { y: number },
       rightPaddle: { y: number },
-      score: { left: number; right: number }
+      score: { left: number; right: number },
     ) => {
       const newBall = { ...ball };
       newBall.x += newBall.velocityX;
@@ -58,7 +62,7 @@ export const useBallPhysics = (config: BallPhysicsConfig = defaultConfig) => {
           newBall.x = 0;
         } else {
           // Score point for right player
-          dispatch(updateScore({ player: 'right', points: score.right + 1 }));
+          dispatch(updateScore({ player: "right", points: score.right + 1 }));
           return;
         }
       } else if (newBall.x >= 100) {
@@ -70,14 +74,14 @@ export const useBallPhysics = (config: BallPhysicsConfig = defaultConfig) => {
           newBall.x = 100;
         } else {
           // Score point for left player
-          dispatch(updateScore({ player: 'left', points: score.left + 1 }));
+          dispatch(updateScore({ player: "left", points: score.left + 1 }));
           return;
         }
       }
 
       return newBall;
     },
-    [config.maxAngle, config.paddleBounce, dispatch]
+    [config.maxAngle, config.paddleBounce, dispatch],
   );
 
   useEffect(() => {
@@ -89,7 +93,7 @@ export const useBallPhysics = (config: BallPhysicsConfig = defaultConfig) => {
       animationFrameRef.current = requestAnimationFrame(animate);
     };
 
-    if (gameStatus === 'playing') {
+    if (gameStatus === "playing") {
       animationFrameRef.current = requestAnimationFrame(animate);
     }
 
@@ -98,11 +102,19 @@ export const useBallPhysics = (config: BallPhysicsConfig = defaultConfig) => {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [updateBallPosition, gameStatus, ball, leftPaddle, rightPaddle, score, dispatch]);
+  }, [
+    updateBallPosition,
+    gameStatus,
+    ball,
+    leftPaddle,
+    rightPaddle,
+    score,
+    dispatch,
+  ]);
 
   return {
     ball,
     leftPaddle,
     rightPaddle,
   };
-}; 
+};

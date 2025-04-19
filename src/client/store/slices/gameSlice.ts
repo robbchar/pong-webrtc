@@ -1,6 +1,11 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-export type GameStatus = 'waiting' | 'countdown' | 'playing' | 'paused' | 'gameOver';
+export type GameStatus =
+  | "waiting"
+  | "countdown"
+  | "playing"
+  | "paused"
+  | "gameOver";
 
 export interface GameState {
   status: GameStatus;
@@ -30,7 +35,7 @@ export interface GameState {
 }
 
 const initialState: GameState = {
-  status: 'waiting',
+  status: "waiting",
   ball: {
     x: 50,
     y: 50,
@@ -57,13 +62,13 @@ const initialState: GameState = {
 };
 
 const gameSlice = createSlice({
-  name: 'game',
+  name: "game",
   initialState,
   reducers: {
     setGameStatus: (state, action: PayloadAction<GameStatus>) => {
       state.status = action.payload;
     },
-    updateBall: (state, action: PayloadAction<GameState['ball']>) => {
+    updateBall: (state, action: PayloadAction<GameState["ball"]>) => {
       state.ball = action.payload;
     },
     updateLeftPaddle: (state, action: PayloadAction<number>) => {
@@ -73,23 +78,28 @@ const gameSlice = createSlice({
       state.rightPaddle.y = action.payload;
     },
     updateOpponentPaddle: (state, action: PayloadAction<{ y: number }>) => {
-      console.warn("updateOpponentPaddle needs logic to determine which paddle to update!");
+      console.warn(
+        "updateOpponentPaddle needs logic to determine which paddle to update!",
+      );
       state.rightPaddle.y = action.payload.y;
     },
-    updateScore: (state, action: PayloadAction<{ player: 'left' | 'right'; points: number }>) => {
+    updateScore: (
+      state,
+      action: PayloadAction<{ player: "left" | "right"; points: number }>,
+    ) => {
       const { player, points } = action.payload;
       state.score[player] = points;
-      
+
       // Check if game is over (10 points)
       if (points >= 10) {
         state.wins[player] = state.wins[player] + 1;
-        state.status = 'gameOver';
+        state.status = "gameOver";
       }
     },
     resetGame: (state) => {
       return {
         ...state,
-        status: 'waiting',
+        status: "waiting",
         ball: { ...initialState.ball },
         score: { ...initialState.score },
         countdown: initialState.countdown,
@@ -104,20 +114,20 @@ const gameSlice = createSlice({
       state.isReady = action.payload;
       // If both players are ready, start the countdown
       if (state.isReady && state.opponentReady) {
-        state.status = 'countdown';
-      } else if (state.status === 'countdown' && !state.isReady) {
+        state.status = "countdown";
+      } else if (state.status === "countdown" && !state.isReady) {
         // If a player becomes not ready during countdown, go back to waiting
-        state.status = 'waiting';
+        state.status = "waiting";
       }
     },
     setOpponentReady: (state, action: PayloadAction<boolean>) => {
       state.opponentReady = action.payload;
       // If both players are ready, start the countdown
       if (state.isReady && state.opponentReady) {
-        state.status = 'countdown';
-      } else if (state.status === 'countdown' && !state.opponentReady) {
+        state.status = "countdown";
+      } else if (state.status === "countdown" && !state.opponentReady) {
         // If a player becomes not ready during countdown, go back to waiting
-        state.status = 'waiting';
+        state.status = "waiting";
       }
     },
   },
@@ -136,4 +146,4 @@ export const {
   setOpponentReady,
 } = gameSlice.actions;
 
-export default gameSlice.reducer; 
+export default gameSlice.reducer;

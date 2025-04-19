@@ -11,4 +11,4 @@
     }
   },
   "include": ["vite.config.ts"]
-} 
+}

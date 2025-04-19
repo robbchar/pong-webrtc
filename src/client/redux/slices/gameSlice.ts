@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 interface Ball {
   x: number;
@@ -17,7 +17,7 @@ interface Scores {
 }
 
 interface GameState {
-  status: 'lobby' | 'countdown' | 'playing' | 'paused' | 'gameOver';
+  status: "lobby" | "countdown" | "playing" | "paused" | "gameOver";
   ball: Ball;
   leftPaddle: Paddle;
   rightPaddle: Paddle;
@@ -27,7 +27,7 @@ interface GameState {
 }
 
 const initialState: GameState = {
-  status: 'lobby',
+  status: "lobby",
   ball: { x: 50, y: 50, vx: 5, vy: 5 },
   leftPaddle: { y: 50 },
   rightPaddle: { y: 50 },
@@ -37,36 +37,39 @@ const initialState: GameState = {
 };
 
 const gameSlice = createSlice({
-  name: 'game',
+  name: "game",
   initialState,
   reducers: {
     updateBall: (state, action: PayloadAction<Ball>) => {
       state.ball = action.payload;
     },
-    updatePaddle: (state, action: PayloadAction<{ player: 'left' | 'right'; position: number }>) => {
+    updatePaddle: (
+      state,
+      action: PayloadAction<{ player: "left" | "right"; position: number }>,
+    ) => {
       const { player, position } = action.payload;
-      if (player === 'left') {
+      if (player === "left") {
         state.leftPaddle.y = position;
       } else {
         state.rightPaddle.y = position;
       }
     },
-    scorePoint: (state, action: PayloadAction<'left' | 'right'>) => {
+    scorePoint: (state, action: PayloadAction<"left" | "right">) => {
       const side = action.payload;
       state.scores[side]++;
-      
+
       if (state.scores[side] >= 10) {
-        state.status = 'gameOver';
+        state.status = "gameOver";
       }
     },
-    setGameStatus: (state, action: PayloadAction<GameState['status']>) => {
+    setGameStatus: (state, action: PayloadAction<GameState["status"]>) => {
       state.status = action.payload;
     },
     setCountdown: (state, action: PayloadAction<number>) => {
       state.countdown = action.payload;
     },
     resetGame: (state) => {
-      return { ...initialState, status: 'lobby' };
+      return { ...initialState, status: "lobby" };
     },
     setReady: (state, action: PayloadAction<boolean>) => {
       state.isReady = action.payload;
@@ -84,4 +87,4 @@ export const {
   setReady,
 } = gameSlice.actions;
 
-export default gameSlice.reducer; 
+export default gameSlice.reducer;

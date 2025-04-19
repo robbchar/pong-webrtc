@@ -1,21 +1,24 @@
-import { Dispatch } from 'redux';
-import { updateOpponentPaddle, setOpponentReady } from '@/store/slices/gameSlice';
-import { SignalingStatus } from '@/types/signalingTypes';
-import { signalingService } from './signalingService';
-import { 
-    setDataChannelStatus, 
-    setPeerConnecting, 
-    setPeerFailed, 
-    setPeerDisconnected,
-    setPeerConnected
-} from '@/store/slices/connectionSlice';
+import { Dispatch } from "redux";
+import {
+  updateOpponentPaddle,
+  setOpponentReady,
+} from "@/store/slices/gameSlice";
+import { SignalingStatus } from "@/types/signalingTypes";
+import { signalingService } from "./signalingService";
+import {
+  setDataChannelStatus,
+  setPeerConnecting,
+  setPeerFailed,
+  setPeerDisconnected,
+  setPeerConnected,
+} from "@/store/slices/connectionSlice";
 
 // Configuration for STUN servers (Google's public servers)
 const peerConnectionConfig: RTCConfiguration = {
   iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' }
-  ]
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" },
+  ],
 };
 
 export class WebRTCService {
@@ -45,22 +48,30 @@ export class WebRTCService {
     this.dispatch = dispatch;
   }
 
-  public async setupConnection(isHost: boolean, opponentId: string): Promise<void> {
-    console.log('[RTCPeerConnection] Setting up connection:', { isHost, opponentId });
-    
+  public async setupConnection(
+    isHost: boolean,
+    opponentId: string,
+  ): Promise<void> {
+    console.log("[RTCPeerConnection] Setting up connection:", {
+      isHost,
+      opponentId,
+    });
+
     if (!this.dispatch) {
-      console.error('[RTCPeerConnection] Dispatch not initialized');
+      console.error("[RTCPeerConnection] Dispatch not initialized");
       return;
     }
 
     if (this.peerConnection) {
-      console.log('[RTCPeerConnection] Connection already exists, cleaning up...');
+      console.log(
+        "[RTCPeerConnection] Connection already exists, cleaning up...",
+      );
       this.cleanup();
     }
 
     // Wait for signaling connection to be ready
     if (signalingService.getStatus() !== SignalingStatus.OPEN) {
-      console.log('[RTCPeerConnection] Waiting for signaling connection...');
+      console.log("[RTCPeerConnection] Waiting for signaling connection...");
       await new Promise<void>((resolve) => {
         const checkConnection = () => {
           if (signalingService.getStatus() === SignalingStatus.OPEN) {
@@ -74,7 +85,7 @@ export class WebRTCService {
       });
     } else {
       // Even if already open, add a small delay
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
 
     this.isHost = isHost;
@@ -83,54 +94,57 @@ export class WebRTCService {
     this.setupPeerConnection();
 
     if (isHost) {
-      console.log('[RTCDataChannel] Creating data channel as host...');
+      console.log("[RTCDataChannel] Creating data channel as host...");
       if (!this.peerConnection) {
-        console.error('[RTCPeerConnection] Peer connection not initialized');
+        console.error("[RTCPeerConnection] Peer connection not initialized");
         return;
       }
-      this.dataChannel = this.peerConnection.createDataChannel('gameData', {
-        ordered: true
+      this.dataChannel = this.peerConnection.createDataChannel("gameData", {
+        ordered: true,
       });
       this.setupDataChannelListeners();
       await this.createAndSendOffer();
     } else {
-      console.log('[RTCPeerConnection] Waiting for data channel from host...');
+      console.log("[RTCPeerConnection] Waiting for data channel from host...");
       if (!this.peerConnection) {
-        console.error('[RTCPeerConnection] Peer connection not initialized');
+        console.error("[RTCPeerConnection] Peer connection not initialized");
         return;
       }
       this.peerConnection.ondatachannel = (event) => {
-        console.log('[RTCDataChannel] Received data channel from host');
+        console.log("[RTCDataChannel] Received data channel from host");
         this.dataChannel = event.channel;
         this.setupDataChannelListeners();
       };
       // Signal to host that we're ready for the offer
-      signalingService.sendMessage('ready_for_offer', {
-        to: this.opponentId
+      signalingService.sendMessage("ready_for_offer", {
+        to: this.opponentId,
       });
     }
   }
 
   private setupPeerConnection(): void {
     if (!this.dispatch) {
-      console.warn('[RTCPeerConnection] Dispatch not set');
+      console.warn("[RTCPeerConnection] Dispatch not set");
       return;
     }
 
-    console.log('[RTCPeerConnection] Creating new connection...');
+    console.log("[RTCPeerConnection] Creating new connection...");
     this.peerConnection = new RTCPeerConnection(this.configuration);
     this.dispatch(setPeerConnecting());
 
     this.peerConnection.onicecandidate = (event) => {
       if (event.candidate && this.opponentId) {
         try {
-          console.log('[RTCPeerConnection] Sending ICE candidate...');
-          signalingService.sendMessage('ice-candidate', {
+          console.log("[RTCPeerConnection] Sending ICE candidate...");
+          signalingService.sendMessage("ice-candidate", {
             candidate: event.candidate,
-            to: this.opponentId
+            to: this.opponentId,
           });
         } catch (error) {
-          console.error('[RTCPeerConnection] Failed to send ICE candidate:', error);
+          console.error(
+            "[RTCPeerConnection] Failed to send ICE candidate:",
+            error,
+          );
         }
       }
     };
@@ -138,23 +152,31 @@ export class WebRTCService {
     this.peerConnection.onconnectionstatechange = () => {
       if (!this.peerConnection || !this.dispatch) return;
 
-      console.log('[RTCPeerConnection] State changed:', this.peerConnection.connectionState);
+      console.log(
+        "[RTCPeerConnection] State changed:",
+        this.peerConnection.connectionState,
+      );
 
       switch (this.peerConnection.connectionState) {
-        case 'connected':
-          console.log('[RTCPeerConnection] Connection established!');
-          this.dispatch(setPeerConnected({ peerId: this.opponentId || '', isHost: this.isHost }));
+        case "connected":
+          console.log("[RTCPeerConnection] Connection established!");
+          this.dispatch(
+            setPeerConnected({
+              peerId: this.opponentId || "",
+              isHost: this.isHost,
+            }),
+          );
           break;
-        case 'disconnected':
-        case 'failed':
-          console.log('[RTCPeerConnection] Connection failed or disconnected');
+        case "disconnected":
+        case "failed":
+          console.log("[RTCPeerConnection] Connection failed or disconnected");
           this.dispatch(setPeerDisconnected());
-          this.dispatch(setDataChannelStatus('closed'));
+          this.dispatch(setDataChannelStatus("closed"));
           break;
-        case 'closed':
-          console.log('[RTCPeerConnection] Connection closed');
+        case "closed":
+          console.log("[RTCPeerConnection] Connection closed");
           this.dispatch(setPeerDisconnected());
-          this.dispatch(setDataChannelStatus('closed'));
+          this.dispatch(setDataChannelStatus("closed"));
           this.cleanup();
           break;
       }
@@ -163,18 +185,20 @@ export class WebRTCService {
 
   public handleReadyForOffer(fromId: string): void {
     if (!this.isHost || fromId !== this.opponentId || !this.peerConnection) {
-      console.warn('[RTCDataChannel] Cannot handle ready for offer:', {
+      console.warn("[RTCDataChannel] Cannot handle ready for offer:", {
         isHost: this.isHost,
         fromId,
         opponentId: this.opponentId,
-        hasPeerConnection: !!this.peerConnection
+        hasPeerConnection: !!this.peerConnection,
       });
       return;
     }
 
-    console.log('[RTCDataChannel] Peer ready, creating data channel as host...');
-    this.dataChannel = this.peerConnection.createDataChannel('gameData', {
-      ordered: true
+    console.log(
+      "[RTCDataChannel] Peer ready, creating data channel as host...",
+    );
+    this.dataChannel = this.peerConnection.createDataChannel("gameData", {
+      ordered: true,
     });
     this.setupDataChannelListeners();
     this.createAndSendOffer();
@@ -182,9 +206,9 @@ export class WebRTCService {
 
   private setupDataChannelListeners(): void {
     if (!this.dataChannel || !this.dispatch) {
-      console.warn('[RTCDataChannel] Cannot setup listeners:', {
+      console.warn("[RTCDataChannel] Cannot setup listeners:", {
         hasDataChannel: !!this.dataChannel,
-        hasDispatch: !!this.dispatch
+        hasDispatch: !!this.dispatch,
       });
       return;
     }
@@ -192,8 +216,8 @@ export class WebRTCService {
     const dispatch = this.dispatch;
 
     this.dataChannel.onopen = () => {
-      console.log('[RTCDataChannel] Channel opened');
-      dispatch(setDataChannelStatus('open'));
+      console.log("[RTCDataChannel] Channel opened");
+      dispatch(setDataChannelStatus("open"));
       if (this._queuedReadyState !== null) {
         this.sendReadyState(this._queuedReadyState);
         this._queuedReadyState = null;
@@ -201,66 +225,71 @@ export class WebRTCService {
     };
 
     this.dataChannel.onclose = () => {
-      console.log('[RTCDataChannel] Channel closed');
-      dispatch(setDataChannelStatus('closed'));
+      console.log("[RTCDataChannel] Channel closed");
+      dispatch(setDataChannelStatus("closed"));
     };
 
     this.dataChannel.onerror = (error) => {
-      console.error('[RTCDataChannel] Error:', error);
-      dispatch(setDataChannelStatus('error'));
+      console.error("[RTCDataChannel] Error:", error);
+      dispatch(setDataChannelStatus("error"));
     };
 
     this.dataChannel.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data);
-        console.log('[RTCDataChannel] Received message:', message.type);
-        
+        console.log("[RTCDataChannel] Received message:", message.type);
+
         switch (message.type) {
-          case 'paddle':
+          case "paddle":
             dispatch(updateOpponentPaddle(message.data));
             break;
-          case 'ready':
+          case "ready":
             dispatch(setOpponentReady(message.data));
             break;
           default:
-            console.warn('[RTCDataChannel] Unknown message type:', message.type);
+            console.warn(
+              "[RTCDataChannel] Unknown message type:",
+              message.type,
+            );
         }
       } catch (error) {
-        console.error('[RTCDataChannel] Failed to parse message:', error);
+        console.error("[RTCDataChannel] Failed to parse message:", error);
       }
     };
   }
 
   private async createAndSendOffer(): Promise<void> {
     if (!this.peerConnection || !this.dispatch || !this.opponentId) {
-      console.warn('[RTCPeerConnection] Cannot create offer:', {
+      console.warn("[RTCPeerConnection] Cannot create offer:", {
         hasPeerConnection: !!this.peerConnection,
         hasDispatch: !!this.dispatch,
-        hasOpponentId: !!this.opponentId
+        hasOpponentId: !!this.opponentId,
       });
       return;
     }
 
     try {
-      console.log('[RTCPeerConnection] Creating offer...');
+      console.log("[RTCPeerConnection] Creating offer...");
       const offer = await this.peerConnection.createOffer();
-      
-      if (!offer.sdp) {
-        throw new Error('Offer SDP is missing');
-      }
-      
-      await this.peerConnection.setLocalDescription(offer);
-      console.log('[RTCPeerConnection] Local description set');
 
-      signalingService.sendMessage('offer', {
+      if (!offer.sdp) {
+        throw new Error("Offer SDP is missing");
+      }
+
+      await this.peerConnection.setLocalDescription(offer);
+      console.log("[RTCPeerConnection] Local description set");
+
+      signalingService.sendMessage("offer", {
         sdp: this.peerConnection.localDescription,
-        to: this.opponentId
+        to: this.opponentId,
       });
     } catch (error) {
-      console.error('[RTCPeerConnection] Error creating offer:', error);
+      console.error("[RTCPeerConnection] Error creating offer:", error);
       if (this.offerRetryCount < this.MAX_OFFER_RETRIES) {
         this.offerRetryCount++;
-        console.log(`[RTCPeerConnection] Retrying offer (${this.offerRetryCount}/${this.MAX_OFFER_RETRIES})...`);
+        console.log(
+          `[RTCPeerConnection] Retrying offer (${this.offerRetryCount}/${this.MAX_OFFER_RETRIES})...`,
+        );
         setTimeout(() => this.createAndSendOffer(), 1000);
       } else {
         this.dispatch(setPeerFailed());
@@ -268,96 +297,105 @@ export class WebRTCService {
     }
   }
 
-  public async handleRemoteOffer(offer: RTCSessionDescriptionInit): Promise<void> {
+  public async handleRemoteOffer(
+    offer: RTCSessionDescriptionInit,
+  ): Promise<void> {
     if (!this.peerConnection || !this.dispatch || !this.opponentId) {
-      console.warn('[RTCPeerConnection] Cannot handle remote offer:', {
+      console.warn("[RTCPeerConnection] Cannot handle remote offer:", {
         hasPeerConnection: !!this.peerConnection,
         hasDispatch: !!this.dispatch,
-        hasOpponentId: !!this.opponentId
+        hasOpponentId: !!this.opponentId,
       });
       return;
     }
 
     try {
-      console.log('[RTCPeerConnection] Handling remote offer...');
+      console.log("[RTCPeerConnection] Handling remote offer...");
       await this.peerConnection.setRemoteDescription(offer);
       const answer = await this.peerConnection.createAnswer();
       await this.peerConnection.setLocalDescription(answer);
 
-      signalingService.sendMessage('answer', {
+      signalingService.sendMessage("answer", {
         sdp: this.peerConnection.localDescription,
-        to: this.opponentId
+        to: this.opponentId,
       });
     } catch (error) {
-      console.error('[RTCPeerConnection] Error handling remote offer:', error);
+      console.error("[RTCPeerConnection] Error handling remote offer:", error);
       this.dispatch(setPeerFailed());
     }
   }
 
-  public async handleRemoteAnswer(answer: RTCSessionDescriptionInit): Promise<void> {
+  public async handleRemoteAnswer(
+    answer: RTCSessionDescriptionInit,
+  ): Promise<void> {
     if (!this.peerConnection || !this.dispatch) {
-      console.warn('[RTCPeerConnection] Cannot handle remote answer:', {
+      console.warn("[RTCPeerConnection] Cannot handle remote answer:", {
         hasPeerConnection: !!this.peerConnection,
-        hasDispatch: !!this.dispatch
+        hasDispatch: !!this.dispatch,
       });
       return;
     }
 
     try {
-      console.log('[RTCPeerConnection] Handling remote answer...');
+      console.log("[RTCPeerConnection] Handling remote answer...");
       await this.peerConnection.setRemoteDescription(answer);
     } catch (error) {
-      console.error('[RTCPeerConnection] Error handling remote answer:', error);
+      console.error("[RTCPeerConnection] Error handling remote answer:", error);
       this.dispatch(setPeerFailed());
     }
   }
 
-  public async handleRemoteCandidate(candidate: RTCIceCandidateInit): Promise<void> {
+  public async handleRemoteCandidate(
+    candidate: RTCIceCandidateInit,
+  ): Promise<void> {
     if (!this.peerConnection || !this.dispatch) {
-      console.warn('[RTCPeerConnection] Cannot handle remote candidate:', {
+      console.warn("[RTCPeerConnection] Cannot handle remote candidate:", {
         hasPeerConnection: !!this.peerConnection,
-        hasDispatch: !!this.dispatch
+        hasDispatch: !!this.dispatch,
       });
       return;
     }
 
     try {
-      console.log('[RTCPeerConnection] Adding remote ICE candidate...');
+      console.log("[RTCPeerConnection] Adding remote ICE candidate...");
       await this.peerConnection.addIceCandidate(candidate);
     } catch (error) {
-      console.error('[RTCPeerConnection] Error adding remote ICE candidate:', error);
+      console.error(
+        "[RTCPeerConnection] Error adding remote ICE candidate:",
+        error,
+      );
       this.dispatch(setPeerFailed());
     }
   }
 
   public sendReadyState(isReady: boolean): void {
     if (!this.dataChannel) {
-      console.log('[RTCDataChannel] Channel not ready, queueing ready state');
+      console.log("[RTCDataChannel] Channel not ready, queueing ready state");
       this._queuedReadyState = isReady;
       return;
     }
 
-    if (this.dataChannel.readyState !== 'open') {
-      console.log('[RTCDataChannel] Channel not open, queueing ready state');
+    if (this.dataChannel.readyState !== "open") {
+      console.log("[RTCDataChannel] Channel not open, queueing ready state");
       this._queuedReadyState = isReady;
       return;
     }
 
     try {
       const message = JSON.stringify({
-        type: 'ready',
-        data: isReady
+        type: "ready",
+        data: isReady,
       });
       this.dataChannel.send(message);
-      console.log('[RTCDataChannel] Sent ready state:', isReady);
+      console.log("[RTCDataChannel] Sent ready state:", isReady);
     } catch (error) {
-      console.error('[RTCDataChannel] Failed to send ready state:', error);
+      console.error("[RTCDataChannel] Failed to send ready state:", error);
       throw error;
     }
   }
 
   public cleanup(): void {
-    console.log('[RTCPeerConnection] Cleaning up...');
+    console.log("[RTCPeerConnection] Cleaning up...");
     if (this.dataChannel) {
       this.dataChannel.close();
       this.dataChannel = null;
@@ -372,4 +410,4 @@ export class WebRTCService {
 }
 
 // Export a singleton instance
-export const webRTCService = WebRTCService.getInstance(); 
+export const webRTCService = WebRTCService.getInstance();

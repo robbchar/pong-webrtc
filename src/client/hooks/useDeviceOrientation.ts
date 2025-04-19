@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 
 interface OrientationState {
   isPortrait: boolean;
@@ -30,16 +30,22 @@ const useDeviceOrientation = (): OrientationState => {
       });
     };
 
-    window.addEventListener('resize', handleResize);
-    window.screen.orientation?.addEventListener('change', handleOrientationChange);
+    window.addEventListener("resize", handleResize);
+    window.screen.orientation?.addEventListener(
+      "change",
+      handleOrientationChange,
+    );
 
     return () => {
-      window.removeEventListener('resize', handleResize);
-      window.screen.orientation?.removeEventListener('change', handleOrientationChange);
+      window.removeEventListener("resize", handleResize);
+      window.screen.orientation?.removeEventListener(
+        "change",
+        handleOrientationChange,
+      );
     };
   }, []);
 
   return orientation;
 };
 
-export default useDeviceOrientation; 
+export default useDeviceOrientation;

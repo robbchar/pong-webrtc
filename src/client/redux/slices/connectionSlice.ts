@@ -1,17 +1,17 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
+type ConnectionStatus = "disconnected" | "connecting" | "connected";
 
 interface ConnectionState {
   status: ConnectionStatus;
 }
 
 const initialState: ConnectionState = {
-  status: 'disconnected',
+  status: "disconnected",
 };
 
 const connectionSlice = createSlice({
-  name: 'connection',
+  name: "connection",
   initialState,
   reducers: {
     setConnectionStatus: (state, action: PayloadAction<ConnectionStatus>) => {
@@ -21,4 +21,4 @@ const connectionSlice = createSlice({
 });
 
 export const { setConnectionStatus } = connectionSlice.actions;
-export default connectionSlice.reducer; 
+export default connectionSlice.reducer;

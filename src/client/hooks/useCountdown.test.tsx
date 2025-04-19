@@ -1,25 +1,27 @@
-import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
-import { renderHook, act } from '@testing-library/react';
-import { Provider } from 'react-redux';
-import { configureStore } from '@reduxjs/toolkit';
-import gameReducer, { GameStatus } from '@/store/slices/gameSlice';
-import { useCountdown } from './useCountdown';
+import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
+import { renderHook, act } from "@testing-library/react";
+import { Provider } from "react-redux";
+import { configureStore } from "@reduxjs/toolkit";
+import gameReducer, { GameStatus } from "@/store/slices/gameSlice";
+import { useCountdown } from "./useCountdown";
 
-describe('useCountdown', () => {
+describe("useCountdown", () => {
   let store: ReturnType<typeof configureStore>;
 
-  const createMockStore = (initialState: Partial<{
-    status: GameStatus;
-    countdown: number;
-    isReady: boolean;
-  }> = {}) => {
+  const createMockStore = (
+    initialState: Partial<{
+      status: GameStatus;
+      countdown: number;
+      isReady: boolean;
+    }> = {},
+  ) => {
     return configureStore({
       reducer: {
         game: gameReducer,
       },
       preloadedState: {
         game: {
-          status: 'waiting' as GameStatus,
+          status: "waiting" as GameStatus,
           ball: {
             x: 50,
             y: 50,
@@ -58,8 +60,8 @@ describe('useCountdown', () => {
     vi.useRealTimers();
   });
 
-  it('should start countdown when status is countdown', () => {
-    store = createMockStore({ status: 'countdown', countdown: 5 });
+  it("should start countdown when status is countdown", () => {
+    store = createMockStore({ status: "countdown", countdown: 5 });
     const { result } = renderHook(() => useCountdown(), {
       wrapper: ({ children }) => <Provider store={store}>{children}</Provider>,
     });
@@ -71,8 +73,8 @@ describe('useCountdown', () => {
     expect(store.getState().game.countdown).toBe(4);
   });
 
-  it('should not progress countdown when status is not countdown', () => {
-    store = createMockStore({ status: 'waiting', countdown: 5 });
+  it("should not progress countdown when status is not countdown", () => {
+    store = createMockStore({ status: "waiting", countdown: 5 });
     const { result } = renderHook(() => useCountdown(), {
       wrapper: ({ children }) => <Provider store={store}>{children}</Provider>,
     });
@@ -84,8 +86,8 @@ describe('useCountdown', () => {
     expect(store.getState().game.countdown).toBe(5);
   });
 
-  it('should change game status to playing when countdown reaches zero', () => {
-    store = createMockStore({ status: 'countdown', countdown: 1 });
+  it("should change game status to playing when countdown reaches zero", () => {
+    store = createMockStore({ status: "countdown", countdown: 1 });
     renderHook(() => useCountdown(), {
       wrapper: ({ children }) => <Provider store={store}>{children}</Provider>,
     });
@@ -93,11 +95,11 @@ describe('useCountdown', () => {
     act(() => {
       vi.advanceTimersByTime(1000);
     });
-    expect(store.getState().game.status).toBe('playing');
+    expect(store.getState().game.status).toBe("playing");
   });
 
-  it('should clear interval when unmounted', () => {
-    store = createMockStore({ status: 'countdown', countdown: 5 });
+  it("should clear interval when unmounted", () => {
+    store = createMockStore({ status: "countdown", countdown: 5 });
     const { unmount } = renderHook(() => useCountdown(), {
       wrapper: ({ children }) => <Provider store={store}>{children}</Provider>,
     });
@@ -108,4 +110,4 @@ describe('useCountdown', () => {
     });
     expect(store.getState().game.countdown).toBe(5);
   });
-}); 
+});

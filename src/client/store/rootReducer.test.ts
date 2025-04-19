@@ -1,13 +1,16 @@
-import { describe, it, expect } from 'vitest';
-import rootReducer from '@/store/rootReducer';
-import { setSignalingStatus, ConnectionState } from '@/store/slices/connectionSlice';
-import { GameStatus } from '@/store/slices/gameSlice';
-import { SignalingStatus } from '@/types/signalingTypes';
+import { describe, it, expect } from "vitest";
+import rootReducer from "@/store/rootReducer";
+import {
+  setSignalingStatus,
+  ConnectionState,
+} from "@/store/slices/connectionSlice";
+import { GameStatus } from "@/store/slices/gameSlice";
+import { SignalingStatus } from "@/types/signalingTypes";
 
-describe('rootReducer', () => {
+describe("rootReducer", () => {
   const initialState = {
     game: {
-      status: 'waiting' as GameStatus,
+      status: "waiting" as GameStatus,
       ball: {
         x: 50,
         y: 50,
@@ -34,8 +37,8 @@ describe('rootReducer', () => {
     },
     connection: {
       signalingStatus: SignalingStatus.CLOSED,
-      peerStatus: 'idle',
-      dataChannelStatus: 'closed',
+      peerStatus: "idle",
+      dataChannelStatus: "closed",
       peerId: null,
       isHost: null,
       gameId: null,
@@ -43,14 +46,14 @@ describe('rootReducer', () => {
     } as ConnectionState,
   };
 
-  it('should handle initial state', () => {
-    const actualState = rootReducer(undefined, { type: 'unknown' });
+  it("should handle initial state", () => {
+    const actualState = rootReducer(undefined, { type: "unknown" });
     expect(actualState).toEqual(initialState);
   });
 
-  it('should handle updates to game state', () => {
+  it("should handle updates to game state", () => {
     const action = {
-      type: 'game/updateBall',
+      type: "game/updateBall",
       payload: {
         x: 60,
         y: 40,
@@ -62,14 +65,19 @@ describe('rootReducer', () => {
     expect(newState.game.ball).toEqual(action.payload);
   });
 
-  it('should handle updates to connection state (signalingStatus)', () => {
-    const newState = rootReducer(initialState, setSignalingStatus(SignalingStatus.CONNECTING));
-    expect(newState.connection.signalingStatus).toBe(SignalingStatus.CONNECTING);
+  it("should handle updates to connection state (signalingStatus)", () => {
+    const newState = rootReducer(
+      initialState,
+      setSignalingStatus(SignalingStatus.CONNECTING),
+    );
+    expect(newState.connection.signalingStatus).toBe(
+      SignalingStatus.CONNECTING,
+    );
   });
 
-  it('should maintain state isolation between slices', () => {
+  it("should maintain state isolation between slices", () => {
     const gameAction = {
-      type: 'game/updateBall',
+      type: "game/updateBall",
       payload: {
         x: 60,
         y: 40,
@@ -80,4 +88,4 @@ describe('rootReducer', () => {
     const newState = rootReducer(initialState, gameAction);
     expect(newState.connection).toEqual(initialState.connection);
   });
-}); 
+});

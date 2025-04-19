@@ -1,15 +1,15 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
-import { Provider } from 'react-redux';
-import { configureStore } from '@reduxjs/toolkit';
-import App from './App';
-import gameReducer, { GameStatus } from '@/store/slices/gameSlice';
-import connectionReducer from '@/store/slices/connectionSlice';
-import { SignalingStatus } from '@/types/signalingTypes';
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { Provider } from "react-redux";
+import { configureStore } from "@reduxjs/toolkit";
+import App from "./App";
+import gameReducer, { GameStatus } from "@/store/slices/gameSlice";
+import connectionReducer from "@/store/slices/connectionSlice";
+import { SignalingStatus } from "@/types/signalingTypes";
 
 const createTestStore = () => {
   const defaultGameState = {
-    status: 'waiting' as GameStatus,
+    status: "waiting" as GameStatus,
     ball: {
       x: 50,
       y: 50,
@@ -32,7 +32,7 @@ const createTestStore = () => {
     },
     countdown: 5,
     isReady: false,
-    opponentReady: false
+    opponentReady: false,
   };
 
   return configureStore({
@@ -44,36 +44,36 @@ const createTestStore = () => {
       game: defaultGameState,
       connection: {
         signalingStatus: SignalingStatus.OPEN,
-        peerStatus: 'connected' as const,
-        peerId: 'test-peer',
+        peerStatus: "connected" as const,
+        peerId: "test-peer",
         isHost: true,
-        gameId: 'test-game',
-        dataChannelStatus: 'open' as const,
-        error: null
-      }
+        gameId: "test-game",
+        dataChannelStatus: "open" as const,
+        error: null,
+      },
     },
   });
 };
 
-describe('App', () => {
-  it('renders the game title', () => {
+describe("App", () => {
+  it("renders the game title", () => {
     const store = createTestStore();
     render(
       <Provider store={store}>
         <App />
-      </Provider>
+      </Provider>,
     );
-    expect(screen.getByText('Ready')).toBeInTheDocument();
-    expect(screen.getByTestId('center-line')).toBeInTheDocument();
+    expect(screen.getByText("Ready")).toBeInTheDocument();
+    expect(screen.getByTestId("center-line")).toBeInTheDocument();
   });
 
-  it('renders the game board', () => {
+  it("renders the game board", () => {
     const store = createTestStore();
     render(
       <Provider store={store}>
         <App />
-      </Provider>
+      </Provider>,
     );
-    expect(screen.getByTestId('game-board')).toBeInTheDocument();
+    expect(screen.getByTestId("game-board")).toBeInTheDocument();
   });
-}); 
+});
