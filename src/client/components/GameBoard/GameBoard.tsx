@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store/store';
-import { setReady, setGameStatus } from '@/store/slices/gameSlice';
+import { setReady, setGameStatus, resetGame } from '@/store/slices/gameSlice';
 import Paddle from '../Paddle/Paddle';
 import Ball from '../Ball/Ball';
 import { useBallMovement } from '@/hooks/useBallMovement';
@@ -16,7 +16,8 @@ const GameBoard: React.FC = () => {
     status, 
     isReady, 
     score,
-    wins
+    wins,
+    countdown
   } = useSelector((state: RootState) => state.game);
   const { 
     signalingStatus,
@@ -78,8 +79,46 @@ const GameBoard: React.FC = () => {
   };
 
   const renderOverlay = () => { 
+    if (status === 'gameOver') {
+      return (
+        <div className={styles.overlay} data-testid="game-over">
+          <div className={styles.message}>GAME OVER</div>
+          <div className={styles.winner}>
+            {score.left > score.right ? 'Left Player Wins!' : 'Right Player Wins!'}
+          </div>
+          <button 
+            className={styles.playAgainButton}
+            onClick={() => dispatch(resetGame())}
+          >
+            PLAY AGAIN
+          </button>
+        </div>
+      );
+    }
+
+    if (status === 'paused') {
+      return (
+        <div className={styles.overlay}>
+          <div className={styles.message}>PAUSED</div>
+          <button 
+            className={styles.resumeButton}
+            onClick={() => dispatch(setGameStatus('playing'))}
+          >
+            RESUME
+          </button>
+        </div>
+      );
+    }
+
+    if (status === 'countdown') {
+      return (
+        <div className={styles.overlay}>
+          <div className={styles.message} data-testid="countdown">{countdown}</div>
+        </div>
+      );
+    }
+
     const message = getConnectionMessage();
-    // console.log(`peerStatus: ${peerStatus}, dataChannelStatus: ${dataChannelStatus}, isReady: ${isReady}`);
     return (
       <div className={styles.overlay}>
         <div className={styles.message}>{message}</div>

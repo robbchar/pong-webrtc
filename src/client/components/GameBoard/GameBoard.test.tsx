@@ -89,20 +89,31 @@ describe('GameBoard', () => {
 
   it('should show waiting text when waiting and peer not connected', () => {
     renderWithStore(createMockStore({ 
-      game: { status: 'waiting' }, 
-      connection: { peerStatus: 'idle' } 
+      game: { 
+        status: 'waiting',
+        isReady: true
+      }, 
+      connection: { 
+        peerStatus: 'connected',
+        signalingStatus: SignalingStatus.OPEN,
+        dataChannelStatus: 'open'
+      } 
     }));
     expect(screen.getByText('Waiting for opponent...')).toBeInTheDocument();
-    expect(screen.queryByText('READY')).not.toBeInTheDocument(); 
+    expect(screen.queryByText('Ready')).not.toBeInTheDocument(); 
   });
 
   it('should show READY button when waiting and peer is connected', () => {
     renderWithStore(createMockStore({ 
       game: { status: 'waiting' }, 
-      connection: { peerStatus: 'connected' } 
+      connection: { 
+        peerStatus: 'connected',
+        dataChannelStatus: 'open',
+        signalingStatus: SignalingStatus.OPEN
+      } 
     }));
     expect(screen.queryByText('Waiting for opponent...')).not.toBeInTheDocument(); 
-    expect(screen.getByText('READY')).toBeInTheDocument();
+    expect(screen.getByText('Ready')).toBeInTheDocument();
   });
 
   it('should show countdown when in countdown state', () => {
@@ -113,7 +124,7 @@ describe('GameBoard', () => {
 
   it('should show pause button during gameplay', async () => {
     renderWithStore(createMockStore({ game: { status: 'playing' } }));
-    expect(await screen.findByText('PAUSE')).toBeInTheDocument();
+    expect(await screen.findByText('⏸')).toBeInTheDocument();
   });
 
   it('should show pause overlay when game is paused', () => {
@@ -221,7 +232,7 @@ describe('GameBoard', () => {
   it('should handle pause button click', async () => {
     const store = createMockStore({ game: { status: 'playing' } });
     renderWithStore(store);
-    fireEvent.click(await screen.findByText('PAUSE'));
+    fireEvent.click(await screen.findByText('⏸'));
     expect(store.getState().game.status).toBe('paused');
   });
 
