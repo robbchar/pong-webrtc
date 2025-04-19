@@ -45,7 +45,7 @@ const connectionSlice = createSlice({
     },
     setPeerDisconnected: (state) => {
       state.peerId = null;
-      state.isHost = null;
+      state.isHost = false;
       state.peerStatus = 'disconnected';
       state.dataChannelStatus = 'closed'; // Close data channel on peer disconnect
     },
