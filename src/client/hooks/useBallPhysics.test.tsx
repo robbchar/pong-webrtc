@@ -3,9 +3,9 @@ import { renderHook, act } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { useBallPhysics } from './useBallPhysics';
-import gameReducer, { updateBall } from '../redux/slices/gameSlice';
-import connectionReducer from '../redux/slices/connectionSlice';
-import { RootState } from '../redux/store';
+import gameReducer, { updateBall, GameStatus } from '../store/slices/gameSlice';
+import connectionReducer from '../store/slices/connectionSlice';
+import { RootState } from '../store/store';
 import React from 'react';
 
 describe('useBallPhysics', () => {
@@ -18,15 +18,24 @@ describe('useBallPhysics', () => {
     reducer: rootReducer,
     preloadedState: {
       game: {
-        status: 'playing',
-        ball: { x: 400, y: 300, vx: 5, vy: 0 },
-        leftPaddle: { y: 250 },
-        rightPaddle: { y: 250 },
-        scores: { left: 0, right: 0 },
-        countdown: 5
+        status: 'playing' as GameStatus,
+        ball: { x: 50, y: 50, velocityX: 5, velocityY: 0 },
+        leftPaddle: { y: 50 },
+        rightPaddle: { y: 50 },
+        score: { left: 0, right: 0 },
+        wins: { left: 0, right: 0 },
+        countdown: 5,
+        isReady: false,
+        opponentReady: false
       },
       connection: {
-        status: 'connected'
+        signalingStatus: 'open',
+        peerStatus: 'connected',
+        peerId: 'test-peer',
+        isHost: true,
+        gameId: 'test-game',
+        dataChannelStatus: 'open',
+        error: null
       }
     } as RootState
   });
@@ -70,96 +79,83 @@ describe('useBallPhysics', () => {
     }
   };
 
-  it('should initialize with the ball position from the store', () => {
+  it('should initialize with the ball and paddles from the store', () => {
     const { result } = renderHook(() => useBallPhysics(), { wrapper: Wrapper });
     
-    expect(result.current.position).toBeDefined();
-    expect(result.current.velocity).toBeDefined();
+    expect(result.current.ball).toBeDefined();
+    expect(result.current.leftPaddle).toBeDefined();
+    expect(result.current.rightPaddle).toBeDefined();
   });
 
   it('should update ball position based on velocity', () => {
-    renderHook(() => useBallPhysics({
-      boardWidth: 800,
-      boardHeight: 600,
-      initialSpeed: 5
-    }), { wrapper: Wrapper });
+    renderHook(() => useBallPhysics(), { wrapper: Wrapper });
 
-    // First frame initializes lastUpdateRef
-    advanceAnimationFrame();
-    // Second frame updates position
+    // First frame initializes lastUpdateRef and updates position
     advanceAnimationFrame();
 
     const state = mockStore.getState();
-    expect(state.game.ball.x).toBe(405); // Should have moved 5 units right
+    expect(state.game.ball.x).toBe(55); // Should have moved 5 units right
   });
 
   it('should handle wall collisions', () => {
-    renderHook(() => useBallPhysics({
-      boardWidth: 800,
-      boardHeight: 600
-    }), { wrapper: Wrapper });
+    renderHook(() => useBallPhysics(), { wrapper: Wrapper });
 
     // First frame initializes
     advanceAnimationFrame();
 
     // Move ball to top wall
     act(() => {
-      mockStore.dispatch(updateBall({ x: 400, y: 0, vx: 0, vy: -5 }));
+      mockStore.dispatch(updateBall({ x: 50, y: 0, velocityX: 0, velocityY: -5 }));
     });
 
     // Let the hook process the state update
     advanceAnimationFrame();
 
     const state = mockStore.getState();
-    expect(state.game.ball.vy).toBe(5); // Should bounce down
+    expect(state.game.ball.velocityY).toBe(5); // Should bounce down
   });
 
   it('should handle paddle collisions', () => {
-    renderHook(() => useBallPhysics({
-      boardWidth: 800,
-      boardHeight: 600,
-      paddleWidth: 20,
-      paddleHeight: 100
-    }), { wrapper: Wrapper });
+    renderHook(() => useBallPhysics(), { wrapper: Wrapper });
 
     // First frame initializes
     advanceAnimationFrame();
 
     // Move ball to left paddle
     act(() => {
-      mockStore.dispatch(updateBall({ x: 20, y: 300, vx: -5, vy: 0 }));
+      mockStore.dispatch(updateBall({ x: 0, y: 50, velocityX: -5, velocityY: 0 }));
     });
 
     // Let the hook process the state update
     advanceAnimationFrame();
 
     const state = mockStore.getState();
-    expect(state.game.ball.vx).toBe(5); // Should bounce right
+    // The velocity should be positive after bouncing off the left paddle
+    // It will be less than 5 due to the angle calculation
+    expect(state.game.ball.velocityX).toBeGreaterThan(0);
+    expect(state.game.ball.velocityX).toBeLessThanOrEqual(5);
   });
 
   it('should handle scoring', () => {
-    renderHook(() => useBallPhysics({
-      boardWidth: 800,
-      boardHeight: 600
-    }), { wrapper: Wrapper });
+    renderHook(() => useBallPhysics(), { wrapper: Wrapper });
 
     // First frame initializes
     advanceAnimationFrame();
 
-    // Move ball past right paddle
+    // Move ball past right paddle (needs to be at x >= 100 and y far from paddle)
     act(() => {
-      mockStore.dispatch(updateBall({ x: 810, y: 300, vx: 5, vy: 0 }));
+      mockStore.dispatch(updateBall({ x: 101, y: 80, velocityX: 1, velocityY: 0 }));
     });
 
     // Let the hook process the state update
     advanceAnimationFrame();
 
     const state = mockStore.getState();
-    expect(state.game.scores.left).toBe(1); // Left player should score
+    expect(state.game.score.left).toBe(1); // Left player should score
   });
 
   it('should clean up animation frame on unmount', () => {
-    const clearTimeout = vi.spyOn(window, 'clearTimeout');
+    const cancelAnimationFrame = vi.spyOn(window, 'cancelAnimationFrame');
     const { unmount } = renderHook(() => useBallPhysics(), { wrapper: Wrapper });
 
     // First frame initializes
@@ -167,6 +163,6 @@ describe('useBallPhysics', () => {
 
     unmount();
 
-    expect(clearTimeout).toHaveBeenCalled();
+    expect(cancelAnimationFrame).toHaveBeenCalled();
   });
 }); 
