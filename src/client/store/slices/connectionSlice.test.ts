@@ -6,16 +6,17 @@ import connectionReducer, {
   setError, 
   clearError 
 } from './connectionSlice';
-import type { ConnectionState, DataChannelStatus } from './connectionSlice';
+import type { ConnectionState } from './connectionSlice';
 import { SignalingStatus } from '@/types/signalingTypes';
 
 // Define the correct initial state structure, explicitly casting peerStatus
-const initialState = {
+const initialState: ConnectionState = {
   signalingStatus: SignalingStatus.CLOSED,
-  peerStatus: 'idle' as ConnectionState['peerStatus'], // Explicit cast
-  dataChannelStatus: 'closed' as DataChannelStatus, // Explicit cast
+  peerStatus: 'idle' as const,
+  dataChannelStatus: 'closed' as const,
   peerId: null,
-  isHost: false,
+  isHost: null,
+  gameId: null,
   error: null,
 };
 
@@ -52,7 +53,7 @@ describe('connectionSlice', () => {
       const actual = connectionReducer(initialState, setPeerConnected(payload));
       expect(actual.peerId).toEqual(payload.peerId);
       expect(actual.isHost).toEqual(payload.isHost);
-      expect(actual.peerStatus).toEqual('connected');
+      expect(actual.peerStatus).toEqual('connected' as const);
       expect(actual.error).toBeNull(); // Should clear errors
     });
   });
@@ -61,14 +62,14 @@ describe('connectionSlice', () => {
     it('should clear peer ID, host status, and set peer status to disconnected', () => {
       const connectedState = {
         ...initialState,
-        peerStatus: 'connected',
+        peerStatus: 'connected' as const,
         peerId: 'test-peer-123',
         isHost: true,
       };
       const actual = connectionReducer(connectedState, setPeerDisconnected());
       expect(actual.peerId).toBeNull();
       expect(actual.isHost).toBe(false);
-      expect(actual.peerStatus).toEqual('disconnected');
+      expect(actual.peerStatus).toEqual('disconnected' as const);
     });
   });
 
