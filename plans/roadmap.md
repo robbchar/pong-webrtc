@@ -426,7 +426,7 @@ export default connectionSlice.reducer;
 // GameBoard.jsx
 import React, { useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { updateBall, updatePaddle } from '../redux/slices/gameSlice';
+import { updateBall, updatePaddle } from '@/redux/slices/gameSlice';
 import Paddle from './Paddle';
 import Ball from './Ball';
 import ScoreBoard from './ScoreBoard';

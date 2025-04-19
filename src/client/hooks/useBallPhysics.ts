@@ -1,153 +1,108 @@
-import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
-import { RootState } from '../redux/store';
-import { updateBall, scorePoint } from '../redux/slices/gameSlice';
-import { useAppDispatch, useAppSelector } from '../redux/hooks';
-
-interface Vector2D {
-  x: number;
-  y: number;
-}
+import { useCallback, useEffect, useRef } from 'react';
+import { RootState } from '@/store/store';
+import { updateBall, updateScore } from '@/store/slices/gameSlice';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 
 interface BallPhysicsConfig {
-  initialSpeed: number;
-  speedIncrease: number;
-  maxSpeed: number;
-  paddleHeight: number;
-  paddleWidth: number;
-  boardWidth: number;
-  boardHeight: number;
+  speed: number;
+  paddleBounce: number;
+  wallBounce: number;
+  maxAngle: number;
 }
 
-const DEFAULT_CONFIG: BallPhysicsConfig = {
-  initialSpeed: 5,
-  speedIncrease: 0.2,
-  maxSpeed: 15,
-  paddleHeight: 100,
-  paddleWidth: 20,
-  boardWidth: 800,
-  boardHeight: 600,
+const defaultConfig: BallPhysicsConfig = {
+  speed: 0.5,
+  paddleBounce: 1.0,
+  wallBounce: 1.0,
+  maxAngle: Math.PI / 4, // 45 degrees
 };
 
-export const useBallPhysics = (config: Partial<BallPhysicsConfig> = {}): { position: Vector2D; velocity: Vector2D } => {
+export const useBallPhysics = (config: BallPhysicsConfig = defaultConfig) => {
   const dispatch = useAppDispatch();
-  const { ball, leftPaddle, rightPaddle, status } = useAppSelector((state: RootState) => state.game);
-  const frameRef = useRef<number | undefined>(undefined);
-  const lastUpdateRef = useRef<number | undefined>(undefined);
-  const ballRef = useRef(ball);
+  const ball = useAppSelector((state: RootState) => state.game.ball);
+  const leftPaddle = useAppSelector((state: RootState) => state.game.leftPaddle);
+  const rightPaddle = useAppSelector((state: RootState) => state.game.rightPaddle);
+  const score = useAppSelector((state: RootState) => state.game.score);
+  const gameStatus = useAppSelector((state: RootState) => state.game.status);
+  const animationFrameRef = useRef<number>(0);
 
-  const physicsConfig = { ...DEFAULT_CONFIG, ...config };
+  const updateBallPosition = useCallback(
+    (
+      ball: {
+        x: number;
+        y: number;
+        velocityX: number;
+        velocityY: number;
+      },
+      leftPaddle: { y: number },
+      rightPaddle: { y: number },
+      score: { left: number; right: number }
+    ) => {
+      const newBall = { ...ball };
+      newBall.x += newBall.velocityX;
+      newBall.y += newBall.velocityY;
 
-  // Update ballRef when ball changes
-  useEffect(() => {
-    ballRef.current = ball;
-  }, [ball]);
+      // Wall collision
+      if (newBall.y <= 0 || newBall.y >= 100) {
+        newBall.velocityY = -newBall.velocityY;
+        newBall.y = newBall.y <= 0 ? 0 : 100;
+      }
 
-  const checkPaddleCollision = useCallback((ballPos: Vector2D, ballVel: Vector2D): Vector2D => {
-    const { paddleHeight, paddleWidth, boardWidth } = physicsConfig;
-
-    // Left paddle collision
-    if (
-      ballPos.x <= paddleWidth &&
-      ballPos.y >= leftPaddle.y &&
-      ballPos.y <= leftPaddle.y + paddleHeight
-    ) {
-      const relativeIntersectY = (leftPaddle.y + paddleHeight / 2) - ballPos.y;
-      const normalizedIntersect = relativeIntersectY / (paddleHeight / 2);
-      const bounceAngle = normalizedIntersect * Math.PI / 4;
-      
-      return {
-        x: Math.abs(ballVel.x),
-        y: -Math.sin(bounceAngle) * Math.sqrt(ballVel.x * ballVel.x + ballVel.y * ballVel.y)
-      };
-    }
-
-    // Right paddle collision
-    if (
-      ballPos.x >= boardWidth - paddleWidth &&
-      ballPos.y >= rightPaddle.y &&
-      ballPos.y <= rightPaddle.y + paddleHeight
-    ) {
-      const relativeIntersectY = (rightPaddle.y + paddleHeight / 2) - ballPos.y;
-      const normalizedIntersect = relativeIntersectY / (paddleHeight / 2);
-      const bounceAngle = normalizedIntersect * Math.PI / 4;
-      
-      return {
-        x: -Math.abs(ballVel.x),
-        y: -Math.sin(bounceAngle) * Math.sqrt(ballVel.x * ballVel.x + ballVel.y * ballVel.y)
-      };
-    }
-
-    return ballVel;
-  }, [leftPaddle.y, rightPaddle.y, physicsConfig]);
-
-  const updateBallPosition = useCallback((timestamp: number) => {
-    if (!lastUpdateRef.current) {
-      lastUpdateRef.current = timestamp;
-      frameRef.current = requestAnimationFrame(updateBallPosition);
-      return;
-    }
-
-    const deltaTime = (timestamp - lastUpdateRef.current) / 16; // Normalize to ~60fps
-    lastUpdateRef.current = timestamp;
-
-    const { boardWidth, boardHeight } = physicsConfig;
-    const currentBall = ballRef.current;
-    const newPos = {
-      x: currentBall.x + currentBall.vx * deltaTime,
-      y: currentBall.y + currentBall.vy * deltaTime
-    };
-
-    // Schedule next frame before any early returns
-    frameRef.current = requestAnimationFrame(updateBallPosition);
-
-    // Wall collisions
-    if (newPos.y <= 0 || newPos.y >= boardHeight) {
-      dispatch(updateBall({
-        ...newPos,
-        vx: currentBall.vx,
-        vy: -currentBall.vy
-      }));
-      return;
-    }
-
-    // Check for scoring
-    if (newPos.x < 0) {
-      dispatch(scorePoint('right'));
-      return;
-    }
-    if (newPos.x > boardWidth) {
-      dispatch(scorePoint('left'));
-      return;
-    }
-
-    // Check paddle collisions and update position
-    const newVelocity = checkPaddleCollision(newPos, { x: currentBall.vx, y: currentBall.vy });
-    dispatch(updateBall({
-      ...newPos,
-      vx: newVelocity.x,
-      vy: newVelocity.y
-    }));
-  }, [dispatch, checkPaddleCollision, physicsConfig]);
-
-  useEffect(() => {
-    if (status === 'playing') {
-      frameRef.current = requestAnimationFrame(updateBallPosition);
-    }
-    
-    return () => {
-      if (frameRef.current) {
-        // In tests, we're using setTimeout instead of requestAnimationFrame
-        if (process.env.NODE_ENV === 'test') {
-          clearTimeout(frameRef.current);
+      // Paddle collision
+      if (newBall.x <= 0) {
+        if (Math.abs(newBall.y - leftPaddle.y) <= 10) {
+          const relativeIntersectY = (leftPaddle.y - newBall.y) / 10;
+          const bounceAngle = relativeIntersectY * config.maxAngle;
+          newBall.velocityX = Math.cos(bounceAngle) * config.paddleBounce;
+          newBall.velocityY = -Math.sin(bounceAngle) * config.paddleBounce;
+          newBall.x = 0;
         } else {
-          cancelAnimationFrame(frameRef.current);
+          // Score point for right player
+          dispatch(updateScore({ player: 'right', points: score.right + 1 }));
+          return;
+        }
+      } else if (newBall.x >= 100) {
+        if (Math.abs(newBall.y - rightPaddle.y) <= 10) {
+          const relativeIntersectY = (rightPaddle.y - newBall.y) / 10;
+          const bounceAngle = relativeIntersectY * config.maxAngle;
+          newBall.velocityX = -Math.cos(bounceAngle) * config.paddleBounce;
+          newBall.velocityY = -Math.sin(bounceAngle) * config.paddleBounce;
+          newBall.x = 100;
+        } else {
+          // Score point for left player
+          dispatch(updateScore({ player: 'left', points: score.left + 1 }));
+          return;
         }
       }
+
+      return newBall;
+    },
+    [config.maxAngle, config.paddleBounce, dispatch]
+  );
+
+  useEffect(() => {
+    const animate = () => {
+      const newBall = updateBallPosition(ball, leftPaddle, rightPaddle, score);
+      if (newBall) {
+        dispatch(updateBall(newBall));
+      }
+      animationFrameRef.current = requestAnimationFrame(animate);
     };
-  }, [status, updateBallPosition]);
+
+    if (gameStatus === 'playing') {
+      animationFrameRef.current = requestAnimationFrame(animate);
+    }
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [updateBallPosition, gameStatus, ball, leftPaddle, rightPaddle, score, dispatch]);
 
   return {
-    position: { x: ball.x, y: ball.y },
-    velocity: { x: ball.vx, y: ball.vy }
+    ball,
+    leftPaddle,
+    rightPaddle,
   };
 }; 

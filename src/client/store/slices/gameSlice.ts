@@ -2,7 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export type GameStatus = 'waiting' | 'countdown' | 'playing' | 'paused' | 'gameOver';
 
-interface GameState {
+export interface GameState {
   status: GameStatus;
   ball: {
     x: number;
@@ -26,6 +26,7 @@ interface GameState {
   };
   countdown: number;
   isReady: boolean;
+  opponentReady: boolean;
 }
 
 const initialState: GameState = {
@@ -52,6 +53,7 @@ const initialState: GameState = {
   },
   countdown: 5,
   isReady: false,
+  opponentReady: false,
 };
 
 const gameSlice = createSlice({
@@ -69,6 +71,10 @@ const gameSlice = createSlice({
     },
     updateRightPaddle: (state, action: PayloadAction<number>) => {
       state.rightPaddle.y = action.payload;
+    },
+    updateOpponentPaddle: (state, action: PayloadAction<{ y: number }>) => {
+      console.warn("updateOpponentPaddle needs logic to determine which paddle to update!");
+      state.rightPaddle.y = action.payload.y;
     },
     updateScore: (state, action: PayloadAction<{ player: 'left' | 'right'; points: number }>) => {
       const { player, points } = action.payload;
@@ -88,6 +94,7 @@ const gameSlice = createSlice({
         score: { ...initialState.score },
         countdown: initialState.countdown,
         isReady: false,
+        opponentReady: false,
       };
     },
     setCountdown: (state, action: PayloadAction<number>) => {
@@ -95,6 +102,23 @@ const gameSlice = createSlice({
     },
     setReady: (state, action: PayloadAction<boolean>) => {
       state.isReady = action.payload;
+      // If both players are ready, start the countdown
+      if (state.isReady && state.opponentReady) {
+        state.status = 'countdown';
+      } else if (state.status === 'countdown' && !state.isReady) {
+        // If a player becomes not ready during countdown, go back to waiting
+        state.status = 'waiting';
+      }
+    },
+    setOpponentReady: (state, action: PayloadAction<boolean>) => {
+      state.opponentReady = action.payload;
+      // If both players are ready, start the countdown
+      if (state.isReady && state.opponentReady) {
+        state.status = 'countdown';
+      } else if (state.status === 'countdown' && !state.opponentReady) {
+        // If a player becomes not ready during countdown, go back to waiting
+        state.status = 'waiting';
+      }
     },
   },
 });
@@ -104,10 +128,12 @@ export const {
   updateBall,
   updateLeftPaddle,
   updateRightPaddle,
+  updateOpponentPaddle,
   updateScore,
   resetGame,
   setCountdown,
   setReady,
+  setOpponentReady,
 } = gameSlice.actions;
 
 export default gameSlice.reducer; 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '@/store/store';
 import { setReady, setGameStatus, resetGame } from '@/store/slices/gameSlice';
@@ -8,34 +8,130 @@ import { useBallMovement } from '@/hooks/useBallMovement';
 import { useCountdown } from '@/hooks/useCountdown';
 import useDeviceOrientation from '@/hooks/useDeviceOrientation';
 import styles from './GameBoard.module.css';
-import sharedStyles from '@/styles/shared.module.css';
+import { webRTCService } from '@/services/webRTCService';
 
 const GameBoard: React.FC = () => {
   const dispatch = useDispatch();
-  const { ball, leftPaddle, rightPaddle, status, isReady, countdown, score, wins } = useSelector((state: RootState) => state.game);
+  const { 
+    status, 
+    isReady, 
+    score,
+    wins,
+    countdown
+  } = useSelector((state: RootState) => state.game);
+  const { 
+    signalingStatus,
+    peerStatus,
+    dataChannelStatus,
+    isHost,
+    gameId,
+    error
+  } = useSelector((state: RootState) => state.connection);
+  const { ball, leftPaddle, rightPaddle } = useSelector((state: RootState) => state.game);
   const { isPortrait } = useDeviceOrientation();
-  
-  // For now, we'll assume the first player is the host
-  useBallMovement({ isHost: true });
+
+  // Only initialize ball movement when the game is playing
+  useBallMovement({ isHost: isHost ?? false });
   useCountdown();
 
+  useEffect(() => {
+    // Set up WebRTC service dispatch
+    webRTCService.setDispatch(dispatch);
+  }, [dispatch]);
+
   const handleReadyClick = () => {
-    dispatch(setReady(true));
-    // In a real implementation, this would trigger a WebRTC event to the other player
-    // For now, we'll just start the countdown
-    dispatch(setGameStatus('countdown'));
+    console.log('[GameBoard] Ready button clicked. States:', {
+      peerStatus,
+      dataChannelStatus,
+      isReady,
+      isHost,
+      gameId
+    });
+
+    try {
+      const newReadyState = !isReady;
+      dispatch(setReady(newReadyState));
+      webRTCService.sendReadyState(newReadyState);
+    } catch (error) {
+      console.error('[GameBoard] Failed to update ready state:', error);
+      dispatch(setReady(isReady));
+    }
   };
 
-  const handlePauseClick = () => {
-    dispatch(setGameStatus('paused'));
+  const getConnectionMessage = () => {
+    if (error) {
+      return error;
+    }
+
+    if (signalingStatus !== 'open') {
+      return 'Connecting to server...';
+    }
+
+    if (peerStatus === 'connecting') {
+      return 'Establishing connection...';
+    }
+
+    if (peerStatus === 'connected' && dataChannelStatus === 'open') {
+      return isReady ? 'Waiting for opponent...' : 'Click Ready to start';
+    }
+
+    return 'Connecting...'; 
   };
 
-  const handleResumeClick = () => {
-    dispatch(setGameStatus('playing'));
-  };
+  const renderOverlay = () => { 
+    if (status === 'gameOver') {
+      return (
+        <div className={styles.overlay} data-testid="game-over">
+          <div className={styles.message}>GAME OVER</div>
+          <div className={styles.winner}>
+            {score.left > score.right ? 'Left Player Wins!' : 'Right Player Wins!'}
+          </div>
+          <button 
+            className={styles.playAgainButton}
+            onClick={() => dispatch(resetGame())}
+          >
+            PLAY AGAIN
+          </button>
+        </div>
+      );
+    }
 
-  const handleRestartClick = () => {
-    dispatch(resetGame());
+    if (status === 'paused') {
+      return (
+        <div className={styles.overlay}>
+          <div className={styles.message}>PAUSED</div>
+          <button 
+            className={styles.resumeButton}
+            onClick={() => dispatch(setGameStatus('playing'))}
+          >
+            RESUME
+          </button>
+        </div>
+      );
+    }
+
+    if (status === 'countdown') {
+      return (
+        <div className={styles.overlay}>
+          <div className={styles.message} data-testid="countdown">{countdown}</div>
+        </div>
+      );
+    }
+
+    const message = getConnectionMessage();
+    return (
+      <div className={styles.overlay}>
+        <div className={styles.message}>{message}</div>
+        {peerStatus === 'connected' && dataChannelStatus === 'open' && !isReady && (
+          <button 
+            className={styles.readyButton}
+            onClick={handleReadyClick}
+          >
+            Ready
+          </button>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -52,16 +148,16 @@ const GameBoard: React.FC = () => {
       <div className={styles.scoreContainer}>
         <div className={styles.score}>
           <div className={styles.wins}>
-            {Array(wins.left).fill('✓').map((tick, index) => (
-              <span key={index} className={styles.tick}>{tick}</span>
+            {Array(wins.left).fill(0).map((_, i) => (
+              <span key={i} className={styles.tick}>✓</span>
             ))}
           </div>
           <div className={styles.points}>{score.left}</div>
         </div>
         <div className={styles.score}>
           <div className={styles.wins}>
-            {Array(wins.right).fill('✓').map((tick, index) => (
-              <span key={index} className={styles.tick}>{tick}</span>
+            {Array(wins.right).fill(0).map((_, i) => (
+              <span key={i} className={styles.tick}>✓</span>
             ))}
           </div>
           <div className={styles.points}>{score.right}</div>
@@ -72,55 +168,14 @@ const GameBoard: React.FC = () => {
       {status === 'playing' && (
         <button 
           className={styles.pauseButton} 
-          onClick={handlePauseClick}
+          onClick={() => dispatch(setGameStatus('paused'))}
         >
-          PAUSE
+          ⏸
         </button>
       )}
 
       {/* Game overlays */}
-      {status !== 'playing' && (
-        <div className={`${styles.overlay} ${sharedStyles.flexCenter} ${sharedStyles.flexColumn}`}>
-          {/* Waiting Overlay */}
-          {status === 'waiting' && (
-            <div className={`${styles.overlay} ${styles.waitingOverlay}`}>
-              <p className={styles.waitingText}>Waiting for opponent...</p>
-              {/* <button className={styles.button} onClick={handleReadyClick}>
-                READY
-              </button> */}
-            </div>
-          )}
-          {status === 'countdown' && (
-            <div className={styles.countdown} data-testid="countdown">
-              {countdown}
-            </div>
-          )}
-          {status === 'paused' && (
-            <div className={styles.pauseOverlay}>
-              <h2>PAUSED</h2>
-              <button 
-                className={styles.resumeButton}
-                onClick={handleResumeClick}
-              >
-                RESUME
-              </button>
-            </div>
-          )}
-          {status === 'gameOver' && (
-            <div className={styles.gameOver} data-testid="game-over">
-              <h2>GAME OVER</h2>
-              <p>{score.left > score.right ? 'Left Player Wins!' : 'Right Player Wins!'}</p>
-              <button 
-                className={styles.restartButton}
-                onClick={handleRestartClick}
-                data-testid="restart-button"
-              >
-                PLAY AGAIN
-              </button>
-            </div>
-          )}
-        </div>
-      )}
+      {renderOverlay()}
     </div>
   );
 };

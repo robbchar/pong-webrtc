@@ -1,14 +1,9 @@
 .gameBoard {
   position: relative;
-  width: 80vw; /* Adjust as needed */
-  height: 50vw; /* Adjust based on width for aspect ratio */
-  max-width: 1000px; /* Example max width */
-  max-height: 625px; /* Example max height based on aspect ratio */
-  background-color: #000;
-  border: 2px solid #fff;
-  margin: auto; /* Center the board */
-  overflow: hidden; /* Keep elements inside */
-  user-select: none; /* Prevent text selection */
+  width: 100%;
+  height: 100%;
+  background-color: black;
+  overflow: hidden;
 }
 
 .portrait {
@@ -25,11 +20,12 @@
 
 .centerLine {
   position: absolute;
-  top: 0;
   left: 50%;
+  top: 0;
+  bottom: 0;
   width: 2px;
-  height: 100%;
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: white;
+  opacity: 0.2;
 }
 
 .scoreContainer {
@@ -40,21 +36,20 @@
   display: flex;
   justify-content: space-between;
   padding: 0 20px;
-  color: white;
-  font-size: 24px;
-  font-weight: bold;
 }
 
 .score {
+  color: white;
+  font-size: 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
 }
 
 .wins {
   display: flex;
   gap: 5px;
+  margin-bottom: 5px;
 }
 
 .tick {
@@ -64,6 +59,7 @@
 
 .points {
   font-size: 32px;
+  font-weight: bold;
 }
 
 .overlay {
@@ -73,15 +69,32 @@
   right: 0;
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.7);
+  color: white;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
 }
 
-.readyButton {
-  padding: 15px 30px;
+.waitingOverlay {
+  text-align: center;
+}
+
+.waitingText {
   font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.readyContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.button {
+  padding: 10px 20px;
+  font-size: 18px;
   background-color: #4CAF50;
   color: white;
   border: none;
@@ -90,92 +103,78 @@
   transition: background-color 0.3s;
 }
 
-.readyButton:hover {
+.button:hover {
   background-color: #45a049;
 }
 
+.button.ready {
+  background-color: #2196F3;
+}
+
+.opponentReady {
+  color: #4CAF50;
+  font-size: 16px;
+}
+
+.countdown {
+  font-size: 72px;
+  font-weight: bold;
+  color: white;
+}
+
+.pauseOverlay {
+  text-align: center;
+}
+
+.pauseOverlay h2 {
+  font-size: 36px;
+  margin-bottom: 20px;
+}
+
 .resumeButton {
-  padding: 15px 30px;
-  font-size: 24px;
+  padding: 10px 20px;
+  font-size: 18px;
   background-color: #2196F3;
   color: white;
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  transition: background-color 0.3s;
 }
 
-.resumeButton:hover {
-  background-color: #0b7dda;
+.gameOver {
+  text-align: center;
+}
+
+.gameOver h2 {
+  font-size: 36px;
+  margin-bottom: 20px;
+}
+
+.gameOver p {
+  font-size: 24px;
+  margin-bottom: 20px;
 }
 
 .restartButton {
-  padding: 15px 30px;
-  font-size: 24px;
+  padding: 10px 20px;
+  font-size: 18px;
   background-color: #4CAF50;
   color: white;
   border: none;
   border-radius: 5px;
   cursor: pointer;
-  transition: background-color 0.3s;
-  margin-top: 20px;
-}
-
-.restartButton:hover {
-  background-color: #45a049;
 }
 
 .pauseButton {
   position: absolute;
   top: 20px;
   right: 20px;
-  background: none;
+  padding: 5px 10px;
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
   border: none;
-  color: white;
-  font-size: 24px;
+  border-radius: 3px;
   cursor: pointer;
-  padding: 10px;
-  border-radius: 50%;
-  transition: background-color 0.3s;
-}
-
-.pauseButton:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.countdown {
-  font-size: 72px;
-  color: white;
-  font-weight: bold;
-}
-
-.gameOver {
-  text-align: center;
-  color: white;
-}
-
-.gameOver h2 {
-  font-size: 48px;
-  margin-bottom: 20px;
-}
-
-.gameOver p {
-  font-size: 24px;
-  margin-bottom: 30px;
-}
-
-.pauseOverlay {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-}
-
-.pauseOverlay h2 {
-  font-size: 48px;
-  font-weight: bold;
-  color: #fff;
-  margin: 0;
 }
 
 @keyframes pulse {
@@ -193,10 +192,4 @@
 .gameOverMessage {
   font-size: 2em;
   margin-bottom: 20px;
-}
-
-.waitingText {
-  font-size: 1.5em;
-  margin-bottom: 20px;
-  color: #ccc; /* Adjust color as needed */
 } 
