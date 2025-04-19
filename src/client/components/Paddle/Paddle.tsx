@@ -1,10 +1,10 @@
-import React from 'react';
-import styles from './Paddle.module.css';
-import { usePaddleMovement } from '@/hooks/usePaddleMovement';
-import { BOARD_HEIGHT, PADDLE_HEIGHT } from '@/constants/game';
+import React from "react";
+import styles from "./Paddle.module.css";
+import { usePaddleMovement } from "@/hooks/usePaddleMovement";
+import { BOARD_HEIGHT, PADDLE_HEIGHT } from "@/constants/game";
 
 interface PaddleProps {
-  side: 'left' | 'right';
+  side: "left" | "right";
   position: number;
 }
 
@@ -29,4 +29,4 @@ const Paddle: React.FC<PaddleProps> = ({ side, position }) => {
   );
 };
 
-export default Paddle; 
+export default Paddle;

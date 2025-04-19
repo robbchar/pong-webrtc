@@ -1,11 +1,14 @@
 /* Modern CSS Reset */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
-html, body {
+html,
+body {
   height: 100%;
   overflow: hidden; /* Prevent scrolling on the whole page */
 }
@@ -22,12 +25,19 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-img, picture, video, canvas, svg {
+img,
+picture,
+video,
+canvas,
+svg {
   display: block;
   max-width: 100%;
 }
 
-input, button, textarea, select {
+input,
+button,
+textarea,
+select {
   font: inherit;
 }
 
@@ -45,7 +55,11 @@ input, button, textarea, select {
 }
 
 body {
-  font-family: 'Press Start 2P', system-ui, -apple-system, sans-serif;
+  font-family:
+    "Press Start 2P",
+    system-ui,
+    -apple-system,
+    sans-serif;
   background-color: var(--background-color);
   color: var(--primary-color);
 }
@@ -54,4 +68,4 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-} 
+}

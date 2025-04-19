@@ -1,5 +1,5 @@
-import React from 'react';
-import styles from './Ball.module.css';
+import React from "react";
+import styles from "./Ball.module.css";
 
 interface BallProps {
   x: number;
@@ -19,4 +19,4 @@ const Ball: React.FC<BallProps> = ({ x, y }) => {
   );
 };
 
-export default Ball; 
+export default Ball;

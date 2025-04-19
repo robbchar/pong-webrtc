@@ -1,6 +1,7 @@
 # Pong WebRTC Game - Development Todo List
 
 ## Phase 1: Project Setup
+
 - [x] Create React app with `create-react-app pong-webrtc`
 - [x] Install dependencies:
   - [x] `redux` and `@reduxjs/toolkit`
@@ -17,6 +18,7 @@
   - [x] Implement basic error handling
 
 ## Phase 2: Core Game Components
+
 - [x] Create basic game components
   - [x] Game container
   - [x] Scoreboard
@@ -36,6 +38,7 @@
 - [x] Create device orientation detection for mobile
 
 ## Phase 3: Game Physics and Logic
+
 - [x] Implement ball movement logic
   - [x] Basic movement with velocity
   - [x] Wall collision detection
@@ -57,6 +60,7 @@
   - [x] Win tracking with tick marks
 
 ## Phase 4: Networking with WebRTC
+
 - [x] Implement WebSocket signaling server
   - [x] Handle player connections
   - [x] Implement player matching
@@ -77,6 +81,7 @@
   - [ ] User-friendly error messages
 
 ## Phase 5: Game Features and Polish
+
 - [ ] Implement sound effects
   - [ ] Paddle hit sound
   - [ ] Wall hit sound
@@ -96,6 +101,7 @@
   - [ ] Game winner display
 
 ## Phase 6: Testing and Deployment
+
 - [ ] Write integration tests
   - [ ] Game flow tests
   - [ ] WebRTC connection tests (mocked)

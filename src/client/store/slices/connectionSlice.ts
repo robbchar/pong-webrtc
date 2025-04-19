@@ -1,57 +1,66 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { SignalingStatus } from '@/types/signalingTypes';
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { SignalingStatus } from "@/types/signalingTypes";
 
-export type ConnectionStatus = SignalingStatus | 'peerConnected' | 'peerDisconnected';
+export type ConnectionStatus =
+  | SignalingStatus
+  | "peerConnected"
+  | "peerDisconnected";
 
-export type DataChannelStatus = 'opening' | 'open' | 'closing' | 'closed';
+export type DataChannelStatus = "opening" | "open" | "closing" | "closed";
 
 export interface ConnectionState {
   signalingStatus: SignalingStatus; // Track WS connection
-  peerStatus: 'idle' | 'connecting' | 'connected' | 'failed' | 'disconnected';
+  peerStatus: "idle" | "connecting" | "connected" | "failed" | "disconnected";
   peerId: string | null;
   isHost: boolean | null;
   gameId: string | null;
-  dataChannelStatus: 'closed' | 'connecting' | 'open' | 'error';
+  dataChannelStatus: "closed" | "connecting" | "open" | "error";
   error: string | null;
 }
 
 const initialState: ConnectionState = {
   signalingStatus: SignalingStatus.CLOSED,
-  peerStatus: 'idle',
+  peerStatus: "idle",
   peerId: null,
   isHost: null,
   gameId: null,
-  dataChannelStatus: 'closed',
+  dataChannelStatus: "closed",
   error: null,
 };
 
 const connectionSlice = createSlice({
-  name: 'connection',
+  name: "connection",
   initialState,
   reducers: {
     setSignalingStatus: (state, action: PayloadAction<SignalingStatus>) => {
       state.signalingStatus = action.payload;
     },
     setPeerConnecting: (state) => {
-      state.peerStatus = 'connecting';
+      state.peerStatus = "connecting";
     },
-    setPeerConnected: (state, action: PayloadAction<{ peerId: string; isHost: boolean }>) => {
+    setPeerConnected: (
+      state,
+      action: PayloadAction<{ peerId: string; isHost: boolean }>,
+    ) => {
       state.peerId = action.payload.peerId;
       state.isHost = action.payload.isHost;
-      state.peerStatus = 'connected';
+      state.peerStatus = "connected";
       state.error = null;
     },
     setPeerDisconnected: (state) => {
       state.peerId = null;
       state.isHost = false;
-      state.peerStatus = 'disconnected';
-      state.dataChannelStatus = 'closed';
+      state.peerStatus = "disconnected";
+      state.dataChannelStatus = "closed";
     },
     setPeerFailed: (state) => {
-      state.peerStatus = 'failed';
-      state.dataChannelStatus = 'closed';
+      state.peerStatus = "failed";
+      state.dataChannelStatus = "closed";
     },
-    setDataChannelStatus: (state, action: PayloadAction<ConnectionState['dataChannelStatus']>) => {
+    setDataChannelStatus: (
+      state,
+      action: PayloadAction<ConnectionState["dataChannelStatus"]>,
+    ) => {
       state.dataChannelStatus = action.payload;
     },
     setError: (state, action: PayloadAction<string>) => {
@@ -82,4 +91,4 @@ export const {
   setGameId,
   setIsHost,
 } = connectionSlice.actions;
-export default connectionSlice.reducer; 
+export default connectionSlice.reducer;
