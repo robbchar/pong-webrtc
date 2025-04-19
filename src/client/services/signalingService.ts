@@ -32,7 +32,7 @@ class SignalingService {
   private constructor() {
     this.clientId = crypto.randomUUID();
 
-    // Make the ID accessible in the console
+    // Make the player ID accessible in the console
     if (typeof window !== 'undefined') {
       (window as any).getPlayerId = () => {
         console.log('[WebSocket] Your player ID:', this.clientId);
@@ -192,9 +192,9 @@ class SignalingService {
 
     if (this.ws.readyState !== WebSocket.OPEN) {
         console.error('[WebSocket] Cannot send message, connection not open. State:', {
-            wsReadyState: this.ws.readyState,
-            status: this.status,
-            isConnecting: this.isConnecting
+          wsReadyState: this.ws.readyState,
+          status: this.status,
+          isConnecting: this.isConnecting
         });
         return;
     }
@@ -202,9 +202,9 @@ class SignalingService {
     try {
         const message: SignalingMessage = { type, payload };
         console.log('[WebSocket] Attempting to send:', {
-            type,
-            payload,
-            wsReadyState: this.ws.readyState
+          type,
+          payload,
+          wsReadyState: this.ws.readyState
         });
         this.ws.send(JSON.stringify(message));
         console.log('[WebSocket] Message sent successfully');

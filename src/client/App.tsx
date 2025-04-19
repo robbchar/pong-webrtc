@@ -2,8 +2,8 @@ import React, { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Game from './pages/Game';
-import { signalingService } from './services/signalingService';
-import { webRTCService } from './services/webRTCService';
+import { signalingService } from '@/services/signalingService';
+import { webRTCService } from '@/services/webRTCService';
 
 // Use a module-level variable to track initialization state
 let isInitialized = false;

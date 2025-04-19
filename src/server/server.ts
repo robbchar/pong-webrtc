@@ -213,7 +213,7 @@ function handleMessage(senderWs: WebSocket, data: SignalingMessage) {
     case 'offer':
     case 'answer':
     case 'candidate':
-    case 'ice-candidate':  // need to work on this
+    case 'ice-candidate':
       if (opponentId) {
         const opponentWs = clients.get(opponentId);
         if (opponentWs && opponentWs.readyState === WebSocket.OPEN) {

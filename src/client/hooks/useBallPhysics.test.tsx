@@ -4,8 +4,8 @@ import { Provider } from 'react-redux';
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import { useBallPhysics } from './useBallPhysics';
 import gameReducer, { updateBall, GameStatus } from '../store/slices/gameSlice';
-import connectionReducer from '../store/slices/connectionSlice';
-import { RootState } from '../store/store';
+import connectionReducer from '@/store/slices/connectionSlice';
+import { RootState } from '@/store/store';
 import React from 'react';
 
 describe('useBallPhysics', () => {

@@ -21,11 +21,11 @@ describe('usePaddleMovement', () => {
   const createTestStore = (overrides: Partial<{ game: Partial<GameState>, connection: Partial<ConnectionState> }> = {}) => {
     const defaultGameState: GameState = {
       status: 'playing', // Default to playing for movement tests
-      ball: { x: 50, y: 50, velocityX: 5, velocityY: 5 }, // Changed vx/vy to velocityX/Y
+      ball: { x: 50, y: 50, velocityX: 5, velocityY: 5 },
       leftPaddle: { y: 50 },
       rightPaddle: { y: 50 },
-      score: { left: 0, right: 0 }, // Use score not scores
-      wins: { left: 0, right: 0 }, // Add wins
+      score: { left: 0, right: 0 },
+      wins: { left: 0, right: 0 },
       countdown: 5,
       isReady: false,
     };
@@ -40,7 +40,7 @@ describe('usePaddleMovement', () => {
     return configureStore({
       reducer: {
         game: gameReducer,
-        connection: connectionReducer, // Add connection reducer
+        connection: connectionReducer,
       },
       preloadedState: {
         game: { ...defaultGameState, ...(overrides.game || {}) },
@@ -50,7 +50,6 @@ describe('usePaddleMovement', () => {
   };
 
   let mockStore = createTestStore(); 
-  // Add a spy variable declaration
   let dispatchSpy: ReturnType<typeof vi.spyOn>;
 
   const Wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -66,9 +65,9 @@ describe('usePaddleMovement', () => {
 
   beforeEach(() => {
     mockStore = createTestStore(); 
-    dispatchSpy = vi.spyOn(mockStore, 'dispatch'); // Spy on dispatch
+    dispatchSpy = vi.spyOn(mockStore, 'dispatch');
     vi.useFakeTimers();
-    // Mock requestAnimationFrame
+
     let frameId = 0;
     let lastCallback: ((time: number) => void) | null = null;
 
