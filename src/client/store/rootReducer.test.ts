@@ -44,7 +44,8 @@ describe('rootReducer', () => {
   };
 
   it('should handle initial state', () => {
-    expect(rootReducer(undefined, { type: 'unknown' })).toEqual(initialState);
+    const actualState = rootReducer(undefined, { type: 'unknown' });
+    expect(actualState).toEqual(initialState);
   });
 
   it('should handle updates to game state', () => {
