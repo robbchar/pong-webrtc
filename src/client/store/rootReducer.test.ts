@@ -30,13 +30,15 @@ describe('rootReducer', () => {
       },
       countdown: 5,
       isReady: false,
+      opponentReady: false,
     },
     connection: {
       signalingStatus: SignalingStatus.CLOSED,
       peerStatus: 'idle',
       dataChannelStatus: 'closed',
       peerId: null,
-      isHost: false,
+      isHost: null,
+      gameId: null,
       error: null,
     } as ConnectionState,
   };
