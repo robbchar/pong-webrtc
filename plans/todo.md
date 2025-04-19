@@ -62,11 +62,11 @@
   - [x] Implement player matching
   - [x] Relay WebRTC connection data
   - [x] Handle disconnections
-- [ ] Implement WebRTC connection
+- [x] Implement WebRTC connection
   - [x] Create peer connection with Google's STUN server
   - [x] Implement data channel for game data
-  - [ ] Handle connection state changes
-  - [ ] Create offer/answer exchange logic
+  - [x] Handle connection state changes
+  - [x] Create offer/answer exchange logic
 - [ ] Implement host-authority game model
   - [ ] Host handles physics and game state
   - [ ] Client receives updates and sends inputs
