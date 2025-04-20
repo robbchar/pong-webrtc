@@ -14,7 +14,7 @@ interface LoggerConfig {
   enableConsole: boolean;
 }
 
-export class Logger {
+class Logger {
   private static instance: Logger;
   private config: LoggerConfig;
 
