@@ -8,6 +8,7 @@ import {
 } from "@/store/slices/connectionSlice";
 import { SignalingStatus } from "@/types/signalingTypes";
 import { webRTCService } from "./webRTCService"; // Import the new service
+import { logger } from "@/utils/logger";
 
 // Define the structure for messages (mirroring server)
 interface SignalingMessage {
@@ -35,10 +36,10 @@ class SignalingService {
     // Make the player ID accessible in the console
     if (typeof window !== "undefined") {
       (window as any).getPlayerId = () => {
-        console.log("[WebSocket] Your player ID:", this.clientId);
+        logger.info("[WebSocket] Your player ID:", { clientId: this.clientId });
         return this.clientId;
       };
-      console.log(
+      logger.info(
         "[WebSocket] Type getPlayerId() in the console to see your player ID",
       );
     }
@@ -62,7 +63,7 @@ class SignalingService {
       this.dispatch = dispatch;
       return;
     }
-    console.log("[WebSocket] Initializing SignalingService...");
+    logger.info("[WebSocket] Initializing SignalingService...");
     this.dispatch = dispatch;
   }
 
@@ -74,7 +75,7 @@ class SignalingService {
   // Connect to the signaling server
   public connect(url: string): void {
     if (!this.dispatch) {
-      console.error(
+      logger.error(
         "[WebSocket] SignalingService not initialized. Call init(dispatch) first.",
       );
       return;
@@ -87,17 +88,17 @@ class SignalingService {
         (this.status === SignalingStatus.CONNECTING ||
           this.status === SignalingStatus.OPEN))
     ) {
-      console.warn("[WebSocket] Connection already exists or is connecting.");
+      logger.warn("[WebSocket] Connection already exists or is connecting.");
       return;
     }
 
     // If we're in a closing state, wait for it to complete
     if (this.status === SignalingStatus.CLOSING) {
-      console.warn("[WebSocket] Connection is currently closing.");
+      logger.warn("[WebSocket] Connection is currently closing.");
       return;
     }
 
-    console.log(`[WebSocket] Connecting to signaling server at ${url}...`);
+    logger.debug(`[WebSocket] Connecting to signaling server at ${url}...`);
     this.status = SignalingStatus.CONNECTING;
     this.isConnecting = true;
     this.dispatch?.(setSignalingStatus(SignalingStatus.CONNECTING));
@@ -106,7 +107,7 @@ class SignalingService {
       this.ws = new WebSocket(url + "?clientId=" + this.clientId);
 
       this.ws.onopen = () => {
-        console.log("[WebSocket] Connection established.");
+        logger.debug("[WebSocket] Connection established.");
         this.status = SignalingStatus.OPEN;
         this.isConnecting = false;
         this.reconnectAttempts = 0;
@@ -115,29 +116,29 @@ class SignalingService {
       };
 
       this.ws.onmessage = (event) => {
-        // console.log('[WebSocket] Raw message received:', event.data);  // Add this line
+        logger.debug("[WebSocket] Raw message received:", {
+          event: event.data,
+        });
         try {
           const message: SignalingMessage = JSON.parse(event.data);
-          console.log("[WebSocket] Received message:", message.type);
+          logger.debug("[WebSocket] Received message:", { type: message.type });
           this.handleMessage(message);
         } catch (error) {
-          console.error(
-            "[WebSocket] Failed to parse message:",
-            event.data,
-            error,
-          );
+          logger.error("[WebSocket] Failed to parse message:", error as Error, {
+            eventData: event.data,
+          });
         }
       };
 
       this.ws.onerror = (event) => {
-        console.error("[WebSocket] Error:", event);
+        logger.error("[WebSocket] Error:", {} as Error, { event });
         this.dispatch?.(setError("WebSocket connection error."));
         this.isConnecting = false;
         // Don't close the connection on error, let the onclose handler handle it
       };
 
       this.ws.onclose = (event) => {
-        console.log(
+        logger.info(
           `[WebSocket] Connection closed. Code: ${event.code}, Reason: ${event.reason}`,
         );
         this.stopKeepAlive();
@@ -152,12 +153,12 @@ class SignalingService {
           if (this.reconnectAttempts < this.MAX_RECONNECT_ATTEMPTS) {
             this.reconnectAttempts++;
             const delay = this.RECONNECT_DELAY_MS * this.reconnectAttempts;
-            console.log(
+            logger.debug(
               `[WebSocket] Reconnecting (${this.reconnectAttempts}/${this.MAX_RECONNECT_ATTEMPTS}) in ${delay}ms...`,
             );
             setTimeout(() => this.connect(url), delay);
           } else {
-            console.error("[WebSocket] Max reconnection attempts reached.");
+            logger.error("[WebSocket] Max reconnection attempts reached.");
             this.dispatch?.(setError("Failed to connect to signaling server."));
           }
         } else {
@@ -168,7 +169,7 @@ class SignalingService {
         }
       };
     } catch (error) {
-      console.error("[WebSocket] Error creating connection:", error);
+      logger.error("[WebSocket] Error creating connection:", error as Error);
       this.status = SignalingStatus.CLOSED;
       this.isConnecting = false;
       this.dispatch?.(setSignalingStatus(SignalingStatus.CLOSED));
@@ -179,13 +180,13 @@ class SignalingService {
   // Disconnect from the server
   public disconnect(): void {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      console.log("[WebSocket] Disconnecting...");
+      logger.info("[WebSocket] Disconnecting...");
       this.stopKeepAlive();
       this.status = SignalingStatus.CLOSING;
       this.dispatch?.(setSignalingStatus(SignalingStatus.CLOSING));
       this.ws.close();
     } else {
-      console.log("[WebSocket] Already closed or closing.");
+      logger.info("[WebSocket] Already closed or closing.");
       this.status = SignalingStatus.CLOSED;
       this.dispatch?.(setSignalingStatus(SignalingStatus.CLOSED));
       this.ws = null;
@@ -196,13 +197,13 @@ class SignalingService {
   // Send a message to the server
   public sendMessage(type: string, payload?: any): void {
     if (!this.ws || !this.dispatch) {
-      console.error(
+      logger.error(
         "[WebSocket] No WebSocket connection exists or dispatch not initialized",
       );
       return;
     }
 
-    console.log("[WebSocket] Pre-send state check:", {
+    logger.debug("[WebSocket] Pre-send state check:", {
       type,
       wsReadyState: this.ws.readyState,
       status: this.status,
@@ -210,8 +211,9 @@ class SignalingService {
     });
 
     if (this.ws.readyState !== WebSocket.OPEN) {
-      console.error(
+      logger.error(
         "[WebSocket] Cannot send message, connection not open. State:",
+        {} as Error,
         {
           wsReadyState: this.ws.readyState,
           status: this.status,
@@ -223,15 +225,15 @@ class SignalingService {
 
     try {
       const message: SignalingMessage = { type, payload };
-      console.log("[WebSocket] Attempting to send:", {
+      logger.debug("[WebSocket] Attempting to send:", {
         type,
         payload,
         wsReadyState: this.ws.readyState,
       });
       this.ws.send(JSON.stringify(message));
-      console.log("[WebSocket] Message sent successfully");
+      logger.info("[WebSocket] Message sent successfully");
     } catch (error) {
-      console.error("[WebSocket] Error sending message:", error);
+      logger.error("[WebSocket] Error sending message:", error as Error);
       if (this.dispatch) {
         this.dispatch(setError("Failed to send message."));
       }
@@ -242,7 +244,7 @@ class SignalingService {
   private handleMessage(message: SignalingMessage): void {
     if (!this.dispatch) return;
 
-    console.log("[WebSocket] Handling message:", {
+    logger.debug("[WebSocket] Handling message:", {
       type: message.type,
       payload: message.payload,
       senderId: message.senderId,
@@ -250,7 +252,7 @@ class SignalingService {
 
     switch (message.type) {
       case "paired":
-        console.log("[WebSocket] Paired with opponent:", {
+        logger.debug("[WebSocket] Paired with opponent:", {
           opponentId: message.payload.opponentId,
           wsReadyState: this.ws?.readyState,
           status: this.status,
@@ -270,7 +272,7 @@ class SignalingService {
             message.payload.opponentId,
           );
         } else {
-          console.log(
+          logger.debug(
             "[WebSocket] Delaying WebRTC setup until connection is stable",
           );
           // Wait for connection to stabilize
@@ -295,7 +297,7 @@ class SignalingService {
         break;
 
       case "host_assigned":
-        console.log(
+        logger.debug(
           "[WebSocket] Assigned as host for game:",
           message.payload.gameId,
         );
@@ -305,19 +307,21 @@ class SignalingService {
         break;
 
       case "join_game":
-        console.log("[WebSocket] Joining game:", message.payload.gameId);
+        logger.debug("[WebSocket] Joining game:", message.payload.gameId);
         this.dispatch(setGameId(message.payload.gameId));
         this.isHost = false;
         this.dispatch(setIsHost(false));
         break;
 
       case "ready_for_offer":
-        console.log("[WebSocket] Peer ready for offer:", message.senderId);
+        logger.debug("[WebSocket] Peer ready for offer:", {
+          message: message.senderId,
+        });
         webRTCService.handleReadyForOffer(message.senderId || "");
         break;
 
       case "peer_ready":
-        console.log(
+        logger.debug(
           "[WebSocket] Peer ready to connect:",
           message.payload.peerId,
         );
@@ -331,56 +335,57 @@ class SignalingService {
 
       case "ping":
         // Handle ping message from server
-        console.log("[WebSocket] Received ping, sending pong");
+        logger.debug("[WebSocket] Received ping, sending pong");
         this.sendMessage("pong");
         break;
 
       case "pong":
         // Handle pong response from server
-        console.log("[WebSocket] Received pong");
+        logger.debug("[WebSocket] Received pong");
         break;
 
       case "offer":
         if (message.payload?.sdp) {
-          console.log(`[WebSocket] Received offer from ${message.senderId}`);
+          logger.debug(`[WebSocket] Received offer from ${message.senderId}`);
           webRTCService.handleRemoteOffer(message.payload.sdp);
         } else {
-          console.warn("Received invalid offer message:", message.payload);
+          logger.warn("Received invalid offer message:", message.payload);
         }
         break;
 
       case "answer":
         if (message.payload?.sdp) {
-          console.log(`[WebSocket] Received answer from ${message.senderId}`);
+          logger.debug(`[WebSocket] Received answer from ${message.senderId}`);
           webRTCService.handleRemoteAnswer(message.payload.sdp);
         } else {
-          console.warn("Received invalid answer message:", message.payload);
+          logger.warn("Received invalid answer message:", message.payload);
         }
         break;
 
       case "ice-candidate":
         if (message.payload?.candidate) {
-          console.log(
+          logger.debug(
             `[WebSocket] Received ICE candidate from ${message.senderId}`,
           );
           webRTCService.handleRemoteCandidate(message.payload.candidate);
         } else {
-          console.warn("Received invalid candidate message:", message.payload);
+          logger.warn("Received invalid candidate message:", message.payload);
         }
         break;
 
       case "error":
-        console.error("[WebSocket] Server error:", message.payload);
+        logger.error("[WebSocket] Server error:", {} as Error, {
+          message: message.payload,
+        });
         if (this.dispatch) {
           this.dispatch(setError(message.payload || "Unknown server error"));
         }
         break;
 
       default:
-        console.warn(
-          "[WebSocket] Default handler: Unknown message type:",
-          message.type,
-        );
+        logger.warn("[WebSocket] Default handler: Unknown message type:", {
+          type: message.type,
+        });
     }
   }
 
