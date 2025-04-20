@@ -9,6 +9,7 @@ import { useCountdown } from "@/hooks/useCountdown";
 import useDeviceOrientation from "@/hooks/useDeviceOrientation";
 import styles from "./GameBoard.module.css";
 import { webRTCService } from "@/services/webRTCService";
+import { logger } from "@/utils/logger";
 
 const GameBoard: React.FC = () => {
   const dispatch = useDispatch();
@@ -38,7 +39,7 @@ const GameBoard: React.FC = () => {
   }, [dispatch]);
 
   const handleReadyClick = () => {
-    console.log("[GameBoard] Ready button clicked. States:", {
+    logger.debug("[GameBoard] Ready button clicked. States:", {
       peerStatus,
       dataChannelStatus,
       isReady,
@@ -51,7 +52,9 @@ const GameBoard: React.FC = () => {
       dispatch(setReady(newReadyState));
       webRTCService.sendReadyState(newReadyState);
     } catch (error) {
-      console.error("[GameBoard] Failed to update ready state:", error);
+      logger.error("[GameBoard] Failed to update ready state:", {} as Error, {
+        error,
+      });
       dispatch(setReady(isReady));
     }
   };

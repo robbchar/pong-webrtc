@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Game from "./pages/Game";
 import { signalingService } from "@/services/signalingService";
 import { webRTCService } from "@/services/webRTCService";
+import { logger } from "@/utils/logger";
 
 // Use a module-level variable to track initialization state
 let isInitialized = false;
@@ -13,7 +14,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     // Only initialize and connect once
-    console.log("Initializing services...");
+    logger.info("Initializing services...");
 
     // Initialize signaling service
     signalingService.init(dispatch);
@@ -23,14 +24,14 @@ const App: React.FC = () => {
 
     // Connect to signaling server
     const wsUrl = "ws://localhost:8080";
-    console.log("Connecting to Signaling Server at:", wsUrl);
+    logger.info("Connecting to Signaling Server at:", { wsUrl });
     signalingService.connect(wsUrl);
 
     isInitialized = true;
 
     // Cleanup on unmount
     return () => {
-      console.log("Cleaning up services...");
+      logger.info("Cleaning up services...");
       webRTCService.cleanup();
       signalingService.disconnect();
     };
