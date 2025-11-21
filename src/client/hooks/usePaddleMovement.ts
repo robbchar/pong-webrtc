@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { updatePaddle } from "@/redux/slices/gameSlice";
-import { webRTCService } from "@/services/webRTCService";
-import { ConnectionState } from "@/store/slices/connectionSlice";
+import { updateLeftPaddle, updateRightPaddle } from "@/store/slices/gameSlice";
 
 interface PaddleMovementConfig {
   speed: number;
@@ -31,11 +29,6 @@ export const usePaddleMovement = (
 
   const paddle = useAppSelector((state) =>
     paddleId === "left" ? state.game.leftPaddle : state.game.rightPaddle,
-  );
-
-  const dataChannelStatus = useAppSelector(
-    (state: { connection: ConnectionState }) =>
-      state.connection.dataChannelStatus,
   );
 
   // Initialize positions
@@ -95,31 +88,17 @@ export const usePaddleMovement = (
       const roundedPosition = Math.round(currentPosition.current);
 
       // Update paddle position in Redux store
-      dispatch(
-        updatePaddle({
-          player: paddleId,
-          position: roundedPosition,
-        }),
-      );
-
-      // Send position update over data channel if open
-      if (dataChannelStatus === "open") {
-        webRTCService.sendGameData({
-          type: "paddleMove",
-          payload: { y: roundedPosition },
-        });
+      if (paddleId === "left") {
+        dispatch(updateLeftPaddle(roundedPosition));
+      } else {
+        dispatch(updateRightPaddle(roundedPosition));
       }
+      // TODO: when gameplay networking resumes, send paddleMove input over WebRTC datachannel.
     }
 
     // Continue the animation loop
     animationFrameId.current = window.requestAnimationFrame(updatePosition);
-  }, [
-    dispatch,
-    paddleId,
-    currentConfig.smoothing,
-    isMoving,
-    dataChannelStatus,
-  ]);
+  }, [dispatch, paddleId, currentConfig.smoothing, isMoving]);
 
   // Set up event listeners and animation loop
   useEffect(() => {

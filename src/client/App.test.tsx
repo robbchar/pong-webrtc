@@ -5,6 +5,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import App from "./App";
 import gameReducer, { GameStatus } from "@/store/slices/gameSlice";
 import connectionReducer from "@/store/slices/connectionSlice";
+import chatReducer from "@/store/slices/chatSlice";
 import { SignalingStatus } from "@/types/signalingTypes";
 
 const createTestStore = () => {
@@ -39,6 +40,7 @@ const createTestStore = () => {
     reducer: {
       game: gameReducer,
       connection: connectionReducer,
+      chat: chatReducer,
     },
     preloadedState: {
       game: defaultGameState,
@@ -50,30 +52,40 @@ const createTestStore = () => {
         gameId: "test-game",
         dataChannelStatus: "open" as const,
         error: null,
+        selfStartIntent: false,
+        opponentStartIntent: false,
+      },
+      chat: {
+        self: { clientId: "test-client", name: "Player-test" },
+        room: { gameId: "test-game" },
+        messages: [],
       },
     },
   });
 };
 
 describe("App", () => {
-  it("renders the game title", () => {
+  it("renders the lobby identity and status", () => {
     const store = createTestStore();
     render(
       <Provider store={store}>
         <App />
       </Provider>,
     );
-    expect(screen.getByText("Ready")).toBeInTheDocument();
-    expect(screen.getByTestId("center-line")).toBeInTheDocument();
+    expect(screen.getByText(/You are:/)).toBeInTheDocument();
+    expect(screen.getByText(/^Player-/)).toBeInTheDocument();
+    expect(screen.getByText(/Status:/)).toBeInTheDocument();
   });
 
-  it("renders the game board", () => {
+  it("renders the chat input and empty state", () => {
     const store = createTestStore();
     render(
       <Provider store={store}>
         <App />
       </Provider>,
     );
-    expect(screen.getByTestId("game-board")).toBeInTheDocument();
+    expect(screen.getByLabelText("Message input")).toBeInTheDocument();
+    expect(screen.getByText("No messages yet.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Send" })).toBeInTheDocument();
   });
 });

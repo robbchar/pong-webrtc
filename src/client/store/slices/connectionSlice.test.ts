@@ -3,6 +3,8 @@ import connectionReducer, {
   setSignalingStatus,
   setPeerConnected,
   setPeerDisconnected,
+  setSelfStartIntent,
+  setOpponentStartIntent,
   setError,
   clearError,
 } from "./connectionSlice";
@@ -18,6 +20,8 @@ const initialState: ConnectionState = {
   isHost: null,
   gameId: null,
   error: null,
+  selfStartIntent: false,
+  opponentStartIntent: false,
 };
 
 describe("connectionSlice", () => {
@@ -72,11 +76,30 @@ describe("connectionSlice", () => {
         peerStatus: "connected" as const,
         peerId: "test-peer-123",
         isHost: true,
+        selfStartIntent: true,
+        opponentStartIntent: true,
       };
       const actual = connectionReducer(connectedState, setPeerDisconnected());
       expect(actual.peerId).toBeNull();
       expect(actual.isHost).toBe(false);
       expect(actual.peerStatus).toEqual("disconnected" as const);
+      expect(actual.selfStartIntent).toBe(false);
+      expect(actual.opponentStartIntent).toBe(false);
+    });
+  });
+
+  describe("start intents", () => {
+    it("should set self start intent", () => {
+      const actual = connectionReducer(initialState, setSelfStartIntent(true));
+      expect(actual.selfStartIntent).toBe(true);
+    });
+
+    it("should set opponent start intent", () => {
+      const actual = connectionReducer(
+        initialState,
+        setOpponentStartIntent(true),
+      );
+      expect(actual.opponentStartIntent).toBe(true);
     });
   });
 

@@ -43,7 +43,14 @@ describe("rootReducer", () => {
       isHost: null,
       gameId: null,
       error: null,
+      selfStartIntent: false,
+      opponentStartIntent: false,
     } as ConnectionState,
+    chat: {
+      self: null,
+      room: { gameId: null },
+      messages: [],
+    },
   };
 
   it("should handle initial state", () => {
