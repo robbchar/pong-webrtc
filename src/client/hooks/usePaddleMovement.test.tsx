@@ -35,6 +35,7 @@ describe("usePaddleMovement", () => {
       wins: { left: 0, right: 0 },
       countdown: 5,
       isReady: false,
+      opponentReady: false,
     };
     const defaultConnectionState: ConnectionState = {
       signalingStatus: SignalingStatus.CLOSED,
@@ -42,7 +43,10 @@ describe("usePaddleMovement", () => {
       dataChannelStatus: "closed",
       peerId: null,
       isHost: false,
+      gameId: null,
       error: null,
+      selfStartIntent: false,
+      opponentStartIntent: false,
     };
     return configureStore({
       reducer: {
@@ -164,8 +168,8 @@ describe("usePaddleMovement", () => {
     // Assert dispatch was called with the correct action type
     expect(dispatchSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        type: "game/updatePaddle",
-        payload: { player: "left", position: expect.any(Number) },
+        type: "game/updateLeftPaddle",
+        payload: expect.any(Number),
       }),
     );
 
@@ -219,8 +223,8 @@ describe("usePaddleMovement", () => {
     // Assert dispatch was called
     expect(dispatchSpy).toHaveBeenCalledWith(
       expect.objectContaining({
-        type: "game/updatePaddle",
-        payload: { player: "right", position: expect.any(Number) },
+        type: "game/updateRightPaddle",
+        payload: expect.any(Number),
       }),
     );
 
