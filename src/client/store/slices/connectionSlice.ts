@@ -16,6 +16,8 @@ export interface ConnectionState {
   gameId: string | null;
   dataChannelStatus: "closed" | "connecting" | "open" | "error";
   error: string | null;
+  selfStartIntent: boolean;
+  opponentStartIntent: boolean;
 }
 
 const initialState: ConnectionState = {
@@ -26,6 +28,8 @@ const initialState: ConnectionState = {
   gameId: null,
   dataChannelStatus: "closed",
   error: null,
+  selfStartIntent: false,
+  opponentStartIntent: false,
 };
 
 const connectionSlice = createSlice({
@@ -46,12 +50,16 @@ const connectionSlice = createSlice({
       state.isHost = action.payload.isHost;
       state.peerStatus = "connected";
       state.error = null;
+      state.opponentStartIntent = false;
+      state.selfStartIntent = false;
     },
     setPeerDisconnected: (state) => {
       state.peerId = null;
       state.isHost = false;
       state.peerStatus = "disconnected";
       state.dataChannelStatus = "closed";
+      state.selfStartIntent = false;
+      state.opponentStartIntent = false;
     },
     setPeerFailed: (state) => {
       state.peerStatus = "failed";
@@ -75,6 +83,12 @@ const connectionSlice = createSlice({
     setIsHost: (state, action: PayloadAction<boolean>) => {
       state.isHost = action.payload;
     },
+    setSelfStartIntent: (state, action: PayloadAction<boolean>) => {
+      state.selfStartIntent = action.payload;
+    },
+    setOpponentStartIntent: (state, action: PayloadAction<boolean>) => {
+      state.opponentStartIntent = action.payload;
+    },
     // We might add specific peer connection status updates later (e.g., connecting, failed)
   },
 });
@@ -90,5 +104,7 @@ export const {
   clearError,
   setGameId,
   setIsHost,
+  setSelfStartIntent,
+  setOpponentStartIntent,
 } = connectionSlice.actions;
 export default connectionSlice.reducer;

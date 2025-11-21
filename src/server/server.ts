@@ -19,7 +19,8 @@ interface SignalingMessage {
     | "join"
     | "ice-candidate"
     | "ready_for_offer"
-    | "chatMessage";
+    | "chatMessage"
+    | "start_intent";
   payload?: any;
   senderId?: string;
   message?: string;
@@ -338,6 +339,28 @@ function handleMessage(senderWs: WebSocket, data: SignalingMessage) {
         console.warn(
           `Cannot relay ready_for_offer: Sender ${senderId} is not paired.`,
         );
+        senderWs.send(
+          JSON.stringify({
+            type: "error",
+            payload: "You are not paired with anyone",
+          }),
+        );
+      }
+      break;
+    case "start_intent":
+      if (opponentId) {
+        const opponentWs = clients.get(opponentId);
+        if (opponentWs && opponentWs.readyState === WebSocket.OPEN) {
+          console.log(
+            `Relaying start_intent from ${senderId} to ${opponentId}`,
+          );
+          opponentWs.send(JSON.stringify({ ...data, senderId }));
+        } else {
+          senderWs.send(
+            JSON.stringify({ type: "error", payload: "Opponent unavailable" }),
+          );
+        }
+      } else {
         senderWs.send(
           JSON.stringify({
             type: "error",

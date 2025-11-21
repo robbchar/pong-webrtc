@@ -5,6 +5,8 @@ import {
   setError,
   setGameId,
   setIsHost,
+  setOpponentStartIntent,
+  setSelfStartIntent,
 } from "@/store/slices/connectionSlice";
 import {
   addSystemMessage,
@@ -36,6 +38,10 @@ class SignalingService {
   private clientId: string;
   private isHost: boolean = false;
   private isConnecting: boolean = false;
+  private opponentId: string | null = null;
+  private selfStartIntent: boolean = false;
+  private opponentStartIntent: boolean = false;
+  private hasStartedWebRTCOnce: boolean = false;
 
   private constructor() {
     this.clientId = crypto.randomUUID();
@@ -259,6 +265,22 @@ class SignalingService {
     this.sendMessage("chatMessage", { text, timestamp });
   }
 
+  public sendStartIntent(): void {
+    if (!this.dispatch || !this.opponentId) return;
+    if (this.selfStartIntent) return;
+
+    this.selfStartIntent = true;
+    this.dispatch(setSelfStartIntent(true));
+    this.dispatch(
+      addSystemMessage({
+        text: `You clicked to start game, waiting for Player-${this.opponentId.slice(0, 4)}...`,
+        timestamp: Date.now(),
+      }),
+    );
+    this.sendMessage("start_intent", { to: this.opponentId });
+    this.maybeStartWebRTC();
+  }
+
   // Handle incoming messages
   private handleMessage(message: SignalingMessage): void {
     if (!this.dispatch) return;
@@ -285,7 +307,14 @@ class SignalingService {
           }),
         );
 
-        // Only proceed with WebRTC setup if we have a stable connection
+        this.opponentId = message.payload.opponentId;
+        this.selfStartIntent = false;
+        this.opponentStartIntent = false;
+        this.hasStartedWebRTCOnce = false;
+        this.dispatch(setSelfStartIntent(false));
+        this.dispatch(setOpponentStartIntent(false));
+
+        // Only proceed with WebRTC setup after both players opt in
         this.dispatch(
           setPeerConnected({
             peerId: message.payload.opponentId,
@@ -397,6 +426,19 @@ class SignalingService {
         }
         break;
 
+      case "start_intent":
+        if (!message.senderId) break;
+        this.opponentStartIntent = true;
+        this.dispatch(setOpponentStartIntent(true));
+        this.dispatch(
+          addSystemMessage({
+            text: `Player-${message.senderId.slice(0, 4)} clicked to start game.`,
+            timestamp: Date.now(),
+          }),
+        );
+        this.maybeStartWebRTC();
+        break;
+
       case "error":
         logger.error("[WebSocket] Server error:", {} as Error, {
           message: message.payload,
@@ -411,6 +453,16 @@ class SignalingService {
           type: message.type,
         });
     }
+  }
+
+  private maybeStartWebRTC(): void {
+    if (this.hasStartedWebRTCOnce) return;
+    if (!this.selfStartIntent || !this.opponentStartIntent) return;
+    if (!this.opponentId) return;
+
+    logger.info("[WebSocket] Both players ready to start, initializing WebRTC");
+    this.hasStartedWebRTCOnce = true;
+    webRTCService.setupConnection(this.isHost, this.opponentId);
   }
 
   private startKeepAlive(): void {

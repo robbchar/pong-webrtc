@@ -5,9 +5,15 @@ import { signalingService } from "@/services/signalingService";
 import styles from "./LobbyChat.module.css";
 
 const LobbyChat: React.FC = () => {
-  const { signalingStatus, error } = useSelector(
-    (state: RootState) => state.connection,
-  );
+  const {
+    signalingStatus,
+    error,
+    peerId,
+    peerStatus,
+    dataChannelStatus,
+    selfStartIntent,
+    opponentStartIntent,
+  } = useSelector((state: RootState) => state.connection);
   const { self, room, messages } = useSelector(
     (state: RootState) => state.chat,
   );
@@ -40,6 +46,13 @@ const LobbyChat: React.FC = () => {
     }
   }, [signalingStatus, error]);
 
+  const isStartDisabled =
+    signalingStatus !== "open" ||
+    !peerId ||
+    selfStartIntent ||
+    peerStatus === "connecting" ||
+    dataChannelStatus === "open";
+
   const handleSend = () => {
     const text = draftMessage.trim();
     if (!text) return;
@@ -71,6 +84,37 @@ const LobbyChat: React.FC = () => {
             </span>
           )}
         </div>
+        {peerId && dataChannelStatus !== "open" && (
+          <div className={styles.startRow}>
+            <button
+              className={styles.startButton}
+              disabled={isStartDisabled}
+              onClick={() => signalingService.sendStartIntent()}
+            >
+              {selfStartIntent ? "Waiting…" : "Start game"}
+            </button>
+            {!selfStartIntent && opponentStartIntent && (
+              <span className={styles.startHint}>
+                Player-{peerId.slice(0, 4)} is ready. Click Start game.
+              </span>
+            )}
+            {selfStartIntent && !opponentStartIntent && (
+              <span className={styles.startHint}>
+                Waiting for Player-{peerId.slice(0, 4)} to start…
+              </span>
+            )}
+            {selfStartIntent && opponentStartIntent && (
+              <span className={styles.startHint}>Starting connection…</span>
+            )}
+          </div>
+        )}
+        {dataChannelStatus === "open" && (
+          <div className={styles.startRow}>
+            <span className={styles.startHint}>
+              WebRTC connected. Ready for game.
+            </span>
+          </div>
+        )}
       </header>
 
       <main className={styles.chatWindow} aria-label="Chat conversation">

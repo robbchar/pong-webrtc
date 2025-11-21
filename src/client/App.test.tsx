@@ -52,6 +52,8 @@ const createTestStore = () => {
         gameId: "test-game",
         dataChannelStatus: "open" as const,
         error: null,
+        selfStartIntent: false,
+        opponentStartIntent: false,
       },
       chat: {
         self: { clientId: "test-client", name: "Player-test" },

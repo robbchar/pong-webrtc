@@ -61,6 +61,8 @@ describe("LobbyChat", () => {
         gameId: null,
         dataChannelStatus: "closed",
         error: null,
+        selfStartIntent: false,
+        opponentStartIntent: false,
       },
     });
     render(

@@ -161,7 +161,15 @@ Keep existing `connectionSlice`. For MVP:
 
 ### Phase 3: Connection stabilization
 
-- With chat stable, re‑introduce WebRTC setup behind a feature flag or only after explicit “Start game” action.
+- With chat stable, re‑introduce WebRTC setup only after an explicit “Start game” action.
+- Both players must opt in before WebRTC is established:
+  - Each player clicks a **Start game** button in the lobby.
+  - When a player clicks, we send a WS `start_intent` to the opponent and show a system message like “Player‑XXXX clicked to start game, waiting…”.
+  - When both intents are true, the host creates the WebRTC offer and the joiner responds as usual.
+- Chat remains on WS during this phase to keep transport debugging simple.
+- Phase 3 success criteria:
+  - Two tabs pair, both click Start game, and a datachannel opens.
+  - We surface clear lobby status for: waiting for opponent, waiting for both intents, and WebRTC connected.
 
 ## Acceptance Criteria
 
