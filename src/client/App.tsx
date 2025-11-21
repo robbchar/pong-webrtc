@@ -2,12 +2,10 @@ import React, { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Game from "./pages/Game";
+import LobbyChat from "./pages/LobbyChat";
 import { signalingService } from "@/services/signalingService";
 import { webRTCService } from "@/services/webRTCService";
 import { logger } from "@/utils/logger";
-
-// Use a module-level variable to track initialization state
-let isInitialized = false;
 
 const App: React.FC = () => {
   const dispatch = useDispatch();
@@ -27,8 +25,6 @@ const App: React.FC = () => {
     logger.info("Connecting to Signaling Server at:", { wsUrl });
     signalingService.connect(wsUrl);
 
-    isInitialized = true;
-
     // Cleanup on unmount
     return () => {
       logger.info("Cleaning up services...");
@@ -40,7 +36,8 @@ const App: React.FC = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Game />} />
+        <Route path="/" element={<LobbyChat />} />
+        <Route path="/game" element={<Game />} />
       </Routes>
     </Router>
   );

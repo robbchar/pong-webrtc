@@ -18,7 +18,8 @@ interface SignalingMessage {
     | "error"
     | "join"
     | "ice-candidate"
-    | "ready_for_offer";
+    | "ready_for_offer"
+    | "chatMessage";
   payload?: any;
   senderId?: string;
   message?: string;
@@ -289,6 +290,34 @@ function handleMessage(senderWs: WebSocket, data: SignalingMessage) {
         );
       }
       break;
+    case "chatMessage": {
+      if (!players || players.length === 0) {
+        console.warn(
+          `Cannot relay chatMessage: Sender ${senderId} is not in a game.`,
+        );
+        break;
+      }
+
+      const payload = {
+        text: data.payload?.text,
+        timestamp: data.payload?.timestamp,
+      };
+
+      players.forEach((playerId) => {
+        if (playerId === senderId) return;
+        const playerWs = clients.get(playerId);
+        if (playerWs && playerWs.readyState === WebSocket.OPEN) {
+          playerWs.send(
+            JSON.stringify({
+              type: "chatMessage",
+              payload,
+              senderId,
+            }),
+          );
+        }
+      });
+      break;
+    }
     case "ready_for_offer":
       if (opponentId) {
         const opponentWs = clients.get(opponentId);

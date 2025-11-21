@@ -6,13 +6,20 @@ import {
   setGameId,
   setIsHost,
 } from "@/store/slices/connectionSlice";
+import {
+  addSystemMessage,
+  chatMessageReceived,
+  chatMessageSent,
+  setRoomGameId,
+  setSelfIdentity,
+} from "@/store/slices/chatSlice";
 import { SignalingStatus } from "@/types/signalingTypes";
 import { webRTCService } from "./webRTCService"; // Import the new service
 import { logger } from "@/utils/logger";
 
 // Define the structure for messages (mirroring server)
 interface SignalingMessage {
-  type: string; // Keep generic for now, specific types handled in handlers
+  type: string; // Specific types handled in handlers
   payload?: any;
   senderId?: string;
 }
@@ -65,6 +72,11 @@ class SignalingService {
     }
     logger.info("[WebSocket] Initializing SignalingService...");
     this.dispatch = dispatch;
+
+    const generatedName = `Player-${this.clientId.slice(0, 4)}`;
+    this.dispatch(
+      setSelfIdentity({ clientId: this.clientId, name: generatedName }),
+    );
   }
 
   // Get current connection status
@@ -240,6 +252,13 @@ class SignalingService {
     }
   }
 
+  public sendChatMessage(text: string): void {
+    if (!this.dispatch) return;
+    const timestamp = Date.now();
+    this.dispatch(chatMessageSent({ text, timestamp }));
+    this.sendMessage("chatMessage", { text, timestamp });
+  }
+
   // Handle incoming messages
   private handleMessage(message: SignalingMessage): void {
     if (!this.dispatch) return;
@@ -259,41 +278,20 @@ class SignalingService {
           isConnecting: this.isConnecting,
         });
 
+        this.dispatch(
+          addSystemMessage({
+            text: `Paired with opponent Player-${message.payload.opponentId.slice(0, 4)}`,
+            timestamp: Date.now(),
+          }),
+        );
+
         // Only proceed with WebRTC setup if we have a stable connection
-        if (this.ws?.readyState === WebSocket.OPEN) {
-          this.dispatch(
-            setPeerConnected({
-              peerId: message.payload.opponentId,
-              isHost: message.payload.isHost,
-            }),
-          );
-          webRTCService.setupConnection(
-            message.payload.isHost,
-            message.payload.opponentId,
-          );
-        } else {
-          logger.debug(
-            "[WebSocket] Delaying WebRTC setup until connection is stable",
-          );
-          // Wait for connection to stabilize
-          const checkAndSetup = () => {
-            if (this.ws?.readyState === WebSocket.OPEN && this.dispatch) {
-              this.dispatch(
-                setPeerConnected({
-                  peerId: message.payload.opponentId,
-                  isHost: message.payload.isHost,
-                }),
-              );
-              webRTCService.setupConnection(
-                message.payload.isHost,
-                message.payload.opponentId,
-              );
-            } else {
-              setTimeout(checkAndSetup, 100);
-            }
-          };
-          checkAndSetup();
-        }
+        this.dispatch(
+          setPeerConnected({
+            peerId: message.payload.opponentId,
+            isHost: message.payload.isHost,
+          }),
+        );
         break;
 
       case "host_assigned":
@@ -304,6 +302,13 @@ class SignalingService {
         this.dispatch(setGameId(message.payload.gameId));
         this.isHost = true;
         this.dispatch(setIsHost(true));
+        this.dispatch(setRoomGameId(message.payload.gameId));
+        this.dispatch(
+          addSystemMessage({
+            text: `Hosting room Room-${message.payload.gameId.slice(0, 4)}. Waiting for opponent...`,
+            timestamp: Date.now(),
+          }),
+        );
         break;
 
       case "join_game":
@@ -311,6 +316,13 @@ class SignalingService {
         this.dispatch(setGameId(message.payload.gameId));
         this.isHost = false;
         this.dispatch(setIsHost(false));
+        this.dispatch(setRoomGameId(message.payload.gameId));
+        this.dispatch(
+          addSystemMessage({
+            text: `Joined room Room-${message.payload.gameId.slice(0, 4)}`,
+            timestamp: Date.now(),
+          }),
+        );
         break;
 
       case "ready_for_offer":
@@ -370,6 +382,18 @@ class SignalingService {
           webRTCService.handleRemoteCandidate(message.payload.candidate);
         } else {
           logger.warn("Received invalid candidate message:", message.payload);
+        }
+        break;
+
+      case "chatMessage":
+        if (message.payload?.text) {
+          this.dispatch(
+            chatMessageReceived({
+              fromId: message.senderId || message.payload.fromId || "unknown",
+              text: message.payload.text,
+              timestamp: message.payload.timestamp ?? Date.now(),
+            }),
+          );
         }
         break;
 

@@ -44,6 +44,11 @@ describe("rootReducer", () => {
       gameId: null,
       error: null,
     } as ConnectionState,
+    chat: {
+      self: null,
+      room: { gameId: null },
+      messages: [],
+    },
   };
 
   it("should handle initial state", () => {
