@@ -4,7 +4,8 @@ import {
   updateLeftPaddle,
   updateRightPaddle,
   updateOpponentPaddle,
-  updateScore,
+  setScores,
+  setWins,
   setCountdown,
   setGameStatus,
   setReady,
@@ -293,12 +294,8 @@ export class WebRTCService {
             dispatch(updateBall(payload.ball));
             dispatch(updateLeftPaddle(payload.leftPaddle.y));
             dispatch(updateRightPaddle(payload.rightPaddle.y));
-            dispatch(
-              updateScore({ player: "left", points: payload.score.left }),
-            );
-            dispatch(
-              updateScore({ player: "right", points: payload.score.right }),
-            );
+            dispatch(setScores(payload.score));
+            dispatch(setWins(payload.wins));
             dispatch(setGameStatus(payload.status));
             dispatch(setCountdown(payload.countdown));
             dispatch(setReady(payload.opponentReady));

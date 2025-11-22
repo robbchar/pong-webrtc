@@ -38,6 +38,7 @@ export type HostGameStatePayload = Pick<
   | "leftPaddle"
   | "rightPaddle"
   | "score"
+  | "wins"
   | "status"
   | "countdown"
   | "isReady"

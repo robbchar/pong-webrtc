@@ -94,6 +94,12 @@ const gameSlice = createSlice({
         state.status = "gameOver";
       }
     },
+    setScores: (state, action: PayloadAction<GameState["score"]>) => {
+      state.score = action.payload;
+    },
+    setWins: (state, action: PayloadAction<GameState["wins"]>) => {
+      state.wins = action.payload;
+    },
     resetGame: (state) => {
       return {
         ...state,
@@ -124,6 +130,8 @@ export const {
   updateRightPaddle,
   updateOpponentPaddle,
   updateScore,
+  setScores,
+  setWins,
   resetGame,
   setCountdown,
   setReady,
