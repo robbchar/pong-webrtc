@@ -63,12 +63,21 @@ export function useInterpolatedGameState(
 
   const latestSnapshotFromRedux: Snapshot = useMemo(
     () => ({
-      timestampMs: Date.now(),
+      timestampMs:
+        !isHost && gameState.lastSnapshotTimestampMs !== null
+          ? gameState.lastSnapshotTimestampMs
+          : Date.now(),
       ball: gameState.ball,
       leftPaddleY: gameState.leftPaddle.y,
       rightPaddleY: gameState.rightPaddle.y,
     }),
-    [gameState.ball, gameState.leftPaddle.y, gameState.rightPaddle.y],
+    [
+      isHost,
+      gameState.lastSnapshotTimestampMs,
+      gameState.ball,
+      gameState.leftPaddle.y,
+      gameState.rightPaddle.y,
+    ],
   );
 
   const [interpolatedState, setInterpolatedState] =
@@ -104,10 +113,12 @@ export function useInterpolatedGameState(
       return;
     }
 
+    const RENDER_DELAY_MS = 75;
+
     const animate = () => {
       const previous = previousSnapshotRef.current;
       const latest = latestSnapshotRef.current ?? latestSnapshotFromRedux;
-      const nowMs = Date.now();
+      const nowMs = Date.now() - RENDER_DELAY_MS;
 
       setInterpolatedState(interpolateSnapshots(previous, latest, nowMs));
 

@@ -28,6 +28,7 @@ describe("usePaddleMovement", () => {
       countdown: 5,
       isReady: false,
       opponentReady: false,
+      lastSnapshotTimestampMs: null,
     };
 
     const defaultConnectionState: ConnectionState = {
