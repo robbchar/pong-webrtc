@@ -184,12 +184,14 @@ const GameBoard: React.FC = () => {
       <div className={styles.centerLine} data-testid="center-line" />
       <Paddle
         side="left"
+        disableTransition={!(isHost ?? false)}
         position={
           (isHost ?? false) ? leftPaddle.y : interpolatedGameState.leftPaddleY
         }
       />
       <Paddle
         side="right"
+        disableTransition={!(isHost ?? false)}
         position={
           (isHost ?? false) ? rightPaddle.y : interpolatedGameState.rightPaddleY
         }
