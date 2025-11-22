@@ -107,12 +107,14 @@ const GameBoard: React.FC = () => {
               ? "Left Player Wins!"
               : "Right Player Wins!"}
           </div>
-          <button
-            className={styles.playAgainButton}
-            onClick={() => dispatch(resetGame())}
-          >
-            PLAY AGAIN
-          </button>
+          {isHost && (
+            <button
+              className={styles.playAgainButton}
+              onClick={() => dispatch(resetGame())}
+            >
+              PLAY AGAIN
+            </button>
+          )}
         </div>
       );
     }

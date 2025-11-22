@@ -217,25 +217,39 @@ describe("GameBoard", () => {
   it("should show game over and winner when score reaches 10", () => {
     const store = createMockStore({
       game: { status: "gameOver", score: { left: 10, right: 5 } },
+      connection: { isHost: true },
     });
     renderWithStore(store);
     expect(screen.getByText("GAME OVER")).toBeInTheDocument();
     expect(screen.getByText("Left Player Wins!")).toBeInTheDocument();
   });
 
-  it("should show restart button after game over", () => {
-    const store = createMockStore({ game: { status: "gameOver" } });
+  it("should show restart button after game over for host", () => {
+    const store = createMockStore({
+      game: { status: "gameOver" },
+      connection: { isHost: true },
+    });
     renderWithStore(store);
     expect(screen.getByText("PLAY AGAIN")).toBeInTheDocument();
   });
 
-  it("should reset game when restart button is clicked", () => {
+  it("should not show restart button after game over for guest", () => {
+    const store = createMockStore({
+      game: { status: "gameOver" },
+      connection: { isHost: false },
+    });
+    renderWithStore(store);
+    expect(screen.queryByText("PLAY AGAIN")).not.toBeInTheDocument();
+  });
+
+  it("should reset game when restart button is clicked by host", () => {
     const store = createMockStore({
       game: {
         status: "gameOver",
         score: { left: 10, right: 5 },
         wins: { left: 1, right: 0 },
       },
+      connection: { isHost: true },
     });
     renderWithStore(store);
 
