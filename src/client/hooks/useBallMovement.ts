@@ -15,13 +15,14 @@ interface UseBallMovementProps {
 
 export const useBallMovement = ({ isHost }: UseBallMovementProps) => {
   const dispatch = useDispatch();
-  const { ball, leftPaddle, rightPaddle, score } = useSelector(
+  const { ball, leftPaddle, rightPaddle, score, status } = useSelector(
     (state: RootState) => state.game,
   );
   const animationFrameRef = useRef<number>();
 
   useEffect(() => {
     if (!isHost) return;
+    if (status !== "playing") return;
 
     const moveBall = () => {
       // Calculate new position
@@ -131,5 +132,5 @@ export const useBallMovement = ({ isHost }: UseBallMovementProps) => {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [ball, leftPaddle, rightPaddle, score, isHost, dispatch]);
+  }, [ball, leftPaddle, rightPaddle, score, status, isHost, dispatch]);
 };
