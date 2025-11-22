@@ -9,7 +9,10 @@ import { useCountdown } from "@/hooks/useCountdown";
 import { useHostGameStateBroadcast } from "@/hooks/useHostGameStateBroadcast";
 import useDeviceOrientation from "@/hooks/useDeviceOrientation";
 import { webRTCService } from "@/services/webRTCService";
-import type { PauseRequestMessage } from "@/types/dataChannelTypes";
+import type {
+  PauseRequestMessage,
+  ReadyStatusMessage,
+} from "@/types/dataChannelTypes";
 import styles from "./GameBoard.module.css";
 import { logger } from "@/utils/logger";
 
@@ -56,7 +59,12 @@ const GameBoard: React.FC = () => {
     try {
       const newReadyState = !isReady;
       dispatch(setReady(newReadyState));
-      // TODO: when gameplay networking resumes, send ready state over WebRTC datachannel.
+      if (!(isHost ?? false) && dataChannelStatus === "open") {
+        webRTCService.sendDataChannelMessage({
+          type: "readyStatus",
+          payload: { isReady: newReadyState },
+        } satisfies ReadyStatusMessage);
+      }
     } catch (error) {
       logger.error("[GameBoard] Failed to update ready state:", {} as Error, {
         error,
@@ -207,6 +215,10 @@ const GameBoard: React.FC = () => {
 
       {/* Game overlays */}
       {renderOverlay()}
+
+      <div className={styles.roleBadge} data-testid="role-badge">
+        {isHost === true ? "Host" : isHost === false ? "Guest" : "Unknown"}
+      </div>
     </div>
   );
 };

@@ -177,6 +177,21 @@
   cursor: pointer;
 }
 
+.roleBadge {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  padding: 4px 8px;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  background-color: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  color: white;
+  pointer-events: none;
+}
+
 @keyframes pulse {
   0% {
     transform: scale(1);
