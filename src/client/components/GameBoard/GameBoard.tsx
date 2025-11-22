@@ -94,6 +94,10 @@ const GameBoard: React.FC = () => {
   };
 
   const renderOverlay = () => {
+    if (status === "playing") {
+      return null;
+    }
+
     if (status === "gameOver") {
       return (
         <div className={styles.overlay} data-testid="game-over">
