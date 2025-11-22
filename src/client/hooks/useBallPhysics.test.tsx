@@ -125,10 +125,10 @@ describe("useBallPhysics", () => {
     // First frame initializes
     advanceAnimationFrame();
 
-    // Move ball to left paddle
+    // Move ball near left paddle so next frame overlaps AABB
     act(() => {
       mockStore.dispatch(
-        updateBall({ x: 0, y: 50, velocityX: -5, velocityY: 0 }),
+        updateBall({ x: 3, y: 55, velocityX: -2, velocityY: 0 }),
       );
     });
 

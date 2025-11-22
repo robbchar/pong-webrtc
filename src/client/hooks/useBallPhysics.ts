@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef } from "react";
 import { RootState } from "@/store/store";
 import { updateBall, updateScore } from "@/store/slices/gameSlice";
+import {
+  BALL_SIZE,
+  PADDLE_HEIGHT,
+  PADDLE_WIDTH,
+  BALL_SPEED,
+} from "@/constants/game";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
 interface BallPhysicsConfig {
@@ -11,14 +17,15 @@ interface BallPhysicsConfig {
 }
 
 const defaultConfig: BallPhysicsConfig = {
-  speed: 0.5,
+  speed: BALL_SPEED,
   paddleBounce: 1.0,
   wallBounce: 1.0,
-  maxAngle: Math.PI / 4, // 45 degrees
+  maxAngle: Math.PI / 3, // 60 degrees
 };
 
 export const useBallPhysics = (config: BallPhysicsConfig = defaultConfig) => {
   const dispatch = useAppDispatch();
+  const isHost = useAppSelector((state: RootState) => state.connection.isHost);
   const ball = useAppSelector((state: RootState) => state.game.ball);
   const leftPaddle = useAppSelector(
     (state: RootState) => state.game.leftPaddle,
@@ -46,45 +53,141 @@ export const useBallPhysics = (config: BallPhysicsConfig = defaultConfig) => {
       newBall.x += newBall.velocityX;
       newBall.y += newBall.velocityY;
 
-      // Wall collision
-      if (newBall.y <= 0 || newBall.y >= 100) {
-        newBall.velocityY = -newBall.velocityY;
-        newBall.y = newBall.y <= 0 ? 0 : 100;
+      const ballRadius = BALL_SIZE / 2;
+      const ballLeft = newBall.x - ballRadius;
+      const ballRight = newBall.x + ballRadius;
+      const ballTop = newBall.y - ballRadius;
+      const ballBottom = newBall.y + ballRadius;
+
+      const currentSpeedMagnitude = Math.hypot(ball.velocityX, ball.velocityY);
+      const speedMagnitude =
+        currentSpeedMagnitude > 0 ? currentSpeedMagnitude : config.speed;
+      const speedIncreasePerHit = config.speed * 0.05;
+      const maxSpeedMagnitude = config.speed * 2.5;
+      const nextSpeedMagnitude =
+        speedMagnitude >= maxSpeedMagnitude
+          ? speedMagnitude
+          : Math.min(speedMagnitude + speedIncreasePerHit, maxSpeedMagnitude);
+
+      const getServeVelocity = (directionX: 1 | -1) => {
+        const verticalAngleRangeRad = Math.PI / 8; // ±22.5deg
+        const randomAngle = (Math.random() * 2 - 1) * verticalAngleRangeRad;
+        return {
+          velocityX: Math.cos(randomAngle) * config.speed * directionX,
+          velocityY: Math.sin(randomAngle) * config.speed,
+        };
+      };
+
+      // Wall collision (top/bottom)
+      if (ballTop <= 0 || ballBottom >= 100) {
+        newBall.velocityY = -newBall.velocityY * config.wallBounce;
+        newBall.y = ballTop <= 0 ? ballRadius : 100 - ballRadius;
       }
 
-      // Paddle collision
-      if (newBall.x <= 0) {
-        if (Math.abs(newBall.y - leftPaddle.y) <= 10) {
-          const relativeIntersectY = (leftPaddle.y - newBall.y) / 10;
-          const bounceAngle = relativeIntersectY * config.maxAngle;
-          newBall.velocityX = Math.cos(bounceAngle) * config.paddleBounce;
-          newBall.velocityY = -Math.sin(bounceAngle) * config.paddleBounce;
-          newBall.x = 0;
-        } else {
-          // Score point for right player
-          dispatch(updateScore({ player: "right", points: score.right + 1 }));
-          return;
-        }
-      } else if (newBall.x >= 100) {
-        if (Math.abs(newBall.y - rightPaddle.y) <= 10) {
-          const relativeIntersectY = (rightPaddle.y - newBall.y) / 10;
-          const bounceAngle = relativeIntersectY * config.maxAngle;
-          newBall.velocityX = -Math.cos(bounceAngle) * config.paddleBounce;
-          newBall.velocityY = -Math.sin(bounceAngle) * config.paddleBounce;
-          newBall.x = 100;
-        } else {
-          // Score point for left player
-          dispatch(updateScore({ player: "left", points: score.left + 1 }));
-          return;
-        }
+      // Paddle collision AABB + angle bounce
+      const leftPaddleTop = leftPaddle.y;
+      const leftPaddleBottom = leftPaddle.y + PADDLE_HEIGHT;
+      const rightPaddleTop = rightPaddle.y;
+      const rightPaddleBottom = rightPaddle.y + PADDLE_HEIGHT;
+
+      const leftPaddleXMin = 0;
+      const leftPaddleXMax = PADDLE_WIDTH;
+      const rightPaddleXMin = 100 - PADDLE_WIDTH;
+      const rightPaddleXMax = 100;
+
+      const overlapsLeftPaddle =
+        ballLeft <= leftPaddleXMax &&
+        ballRight >= leftPaddleXMin &&
+        ballBottom >= leftPaddleTop &&
+        ballTop <= leftPaddleBottom &&
+        newBall.velocityX < 0;
+
+      if (overlapsLeftPaddle) {
+        const paddleCenterY = leftPaddleTop + PADDLE_HEIGHT / 2;
+        const hitFraction = (newBall.y - paddleCenterY) / (PADDLE_HEIGHT / 2);
+        const clampedHitFraction = Math.max(-1, Math.min(1, hitFraction));
+        const baseReflectedAngle = Math.atan2(ball.velocityY, -ball.velocityX);
+        const bounceAngle =
+          baseReflectedAngle + clampedHitFraction * config.maxAngle;
+
+        newBall.velocityX =
+          Math.abs(Math.cos(bounceAngle)) *
+          nextSpeedMagnitude *
+          config.paddleBounce;
+        newBall.velocityY =
+          Math.sin(bounceAngle) * nextSpeedMagnitude * config.paddleBounce;
+        newBall.x = leftPaddleXMax + ballRadius;
+      }
+
+      const overlapsRightPaddle =
+        ballRight >= rightPaddleXMin &&
+        ballLeft <= rightPaddleXMax &&
+        ballBottom >= rightPaddleTop &&
+        ballTop <= rightPaddleBottom &&
+        newBall.velocityX > 0;
+
+      if (overlapsRightPaddle) {
+        const paddleCenterY = rightPaddleTop + PADDLE_HEIGHT / 2;
+        const hitFraction = (newBall.y - paddleCenterY) / (PADDLE_HEIGHT / 2);
+        const clampedHitFraction = Math.max(-1, Math.min(1, hitFraction));
+        const baseReflectedAngle = Math.atan2(ball.velocityY, -ball.velocityX);
+        const bounceAngle =
+          baseReflectedAngle + -clampedHitFraction * config.maxAngle;
+
+        newBall.velocityX =
+          -Math.abs(Math.cos(bounceAngle)) *
+          nextSpeedMagnitude *
+          config.paddleBounce;
+        newBall.velocityY =
+          Math.sin(bounceAngle) * nextSpeedMagnitude * config.paddleBounce;
+        newBall.x = rightPaddleXMin - ballRadius;
+      }
+
+      // Scoring (ball fully past paddles)
+      if (ballRight < 0) {
+        const nextRightScore = score.right + 1;
+        const serveVelocity = getServeVelocity(1);
+        dispatch(updateScore({ player: "right", points: nextRightScore }));
+        dispatch(
+          updateBall({
+            x: 50,
+            y: 50,
+            ...serveVelocity,
+          }),
+        );
+        return;
+      }
+
+      if (ballLeft > 100) {
+        const nextLeftScore = score.left + 1;
+        const serveVelocity = getServeVelocity(-1);
+        dispatch(updateScore({ player: "left", points: nextLeftScore }));
+        dispatch(
+          updateBall({
+            x: 50,
+            y: 50,
+            ...serveVelocity,
+          }),
+        );
+        return;
       }
 
       return newBall;
     },
-    [config.maxAngle, config.paddleBounce, dispatch],
+    [
+      config.maxAngle,
+      config.paddleBounce,
+      config.speed,
+      config.wallBounce,
+      dispatch,
+    ],
   );
 
   useEffect(() => {
+    if (isHost !== true) {
+      return;
+    }
+
     const animate = () => {
       const newBall = updateBallPosition(ball, leftPaddle, rightPaddle, score);
       if (newBall) {
@@ -104,6 +207,7 @@ export const useBallPhysics = (config: BallPhysicsConfig = defaultConfig) => {
     };
   }, [
     updateBallPosition,
+    isHost,
     gameStatus,
     ball,
     leftPaddle,

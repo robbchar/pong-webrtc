@@ -50,13 +50,15 @@ export const useCountdown = ({ isHost = true }: { isHost?: boolean } = {}) => {
         if (ballIsStationary) {
           const totalPoints = score.left + score.right;
           const serveDirection = totalPoints % 2 === 0 ? 1 : -1;
+          const verticalServeVelocity =
+            (Math.random() * 2 - 1) * BALL_SPEED * 0.3;
           dispatch(
             updateBall({
               ...ball,
               x: 50,
               y: 50,
               velocityX: serveDirection * BALL_SPEED,
-              velocityY: 0,
+              velocityY: verticalServeVelocity,
             }),
           );
         }
