@@ -27,6 +27,7 @@ describe("useBallPhysics", () => {
         countdown: 5,
         isReady: false,
         opponentReady: false,
+        lastSnapshotTimestampMs: null,
       },
       connection: {
         signalingStatus: "open",

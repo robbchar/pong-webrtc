@@ -26,6 +26,14 @@ vi.mock("@/hooks/useCountdown", () => ({
   useCountdown: vi.fn(() => 5),
 }));
 
+vi.mock("@/hooks/useInterpolatedGameState", () => ({
+  useInterpolatedGameState: vi.fn(() => ({
+    ball: { x: 50, y: 50, velocityX: 0, velocityY: 0 },
+    leftPaddleY: 50,
+    rightPaddleY: 50,
+  })),
+}));
+
 vi.mock("@/hooks/useDeviceOrientation", () => ({
   __esModule: true,
   default: vi.fn(() => ({
@@ -52,6 +60,7 @@ describe("GameBoard", () => {
       countdown: 5,
       isReady: false,
       opponentReady: false,
+      lastSnapshotTimestampMs: null,
     };
 
     const defaultConnectionState: ConnectionState = {

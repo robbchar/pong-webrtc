@@ -34,6 +34,7 @@ const createTestStore = () => {
     countdown: 5,
     isReady: false,
     opponentReady: false,
+    lastSnapshotTimestampMs: null,
   };
 
   return configureStore({

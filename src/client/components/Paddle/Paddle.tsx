@@ -8,9 +8,14 @@ import { RootState } from "@/store/store";
 interface PaddleProps {
   side: "left" | "right";
   position: number;
+  disableTransition?: boolean;
 }
 
-const Paddle: React.FC<PaddleProps> = ({ side, position }) => {
+const Paddle: React.FC<PaddleProps> = ({
+  side,
+  position,
+  disableTransition = false,
+}) => {
   const isHost = useSelector((state: RootState) => state.connection.isHost);
   const isLocalPlayer = side === "left" ? isHost === true : isHost === false;
 
@@ -26,7 +31,7 @@ const Paddle: React.FC<PaddleProps> = ({ side, position }) => {
 
   return (
     <div
-      className={`${styles.paddle} ${styles[side]}`}
+      className={`${styles.paddle} ${styles[side]} ${isLocalPlayer || disableTransition ? styles.noTransition : ""}`}
       style={{ top: `${clampedPosition}%` }}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}

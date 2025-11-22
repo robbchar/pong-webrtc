@@ -7,6 +7,7 @@ import Ball from "../Ball/Ball";
 import { useBallMovement } from "@/hooks/useBallMovement";
 import { useCountdown } from "@/hooks/useCountdown";
 import { useHostGameStateBroadcast } from "@/hooks/useHostGameStateBroadcast";
+import { useInterpolatedGameState } from "@/hooks/useInterpolatedGameState";
 import useDeviceOrientation from "@/hooks/useDeviceOrientation";
 import { webRTCService } from "@/services/webRTCService";
 import type {
@@ -32,6 +33,7 @@ const GameBoard: React.FC = () => {
   const { ball, leftPaddle, rightPaddle } = useSelector(
     (state: RootState) => state.game,
   );
+  const interpolatedGameState = useInterpolatedGameState(isHost ?? false);
   const { isPortrait } = useDeviceOrientation();
 
   // Only initialize ball movement when the game is playing
@@ -180,9 +182,24 @@ const GameBoard: React.FC = () => {
       id="game-board"
     >
       <div className={styles.centerLine} data-testid="center-line" />
-      <Paddle side="left" position={leftPaddle.y} />
-      <Paddle side="right" position={rightPaddle.y} />
-      <Ball x={ball.x} y={ball.y} />
+      <Paddle
+        side="left"
+        disableTransition={!(isHost ?? false)}
+        position={
+          (isHost ?? false) ? leftPaddle.y : interpolatedGameState.leftPaddleY
+        }
+      />
+      <Paddle
+        side="right"
+        disableTransition={!(isHost ?? false)}
+        position={
+          (isHost ?? false) ? rightPaddle.y : interpolatedGameState.rightPaddleY
+        }
+      />
+      <Ball
+        x={(isHost ?? false) ? ball.x : interpolatedGameState.ball.x}
+        y={(isHost ?? false) ? ball.y : interpolatedGameState.ball.y}
+      />
 
       {/* Score Display */}
       <div className={styles.scoreContainer}>

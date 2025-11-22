@@ -34,6 +34,7 @@ describe("rootReducer", () => {
       countdown: 5,
       isReady: false,
       opponentReady: false,
+      lastSnapshotTimestampMs: null,
     },
     connection: {
       signalingStatus: SignalingStatus.CLOSED,

@@ -8,6 +8,7 @@ import {
   setGameStatus,
   setReady,
   setOpponentReady,
+  setLastSnapshotTimestamp,
 } from "@/store/slices/gameSlice";
 import { addSystemMessage } from "@/store/slices/chatSlice";
 import { SignalingStatus } from "@/types/signalingTypes";
@@ -294,9 +295,14 @@ export class WebRTCService {
             if (this.isHost) break;
             const gameStateMessage = message as HostGameStateMessage;
             const { payload } = gameStateMessage;
+            dispatch(setLastSnapshotTimestamp(gameStateMessage.timestamp));
             dispatch(updateBall(payload.ball));
             dispatch(setPaddleY({ side: "left", y: payload.leftPaddle.y }));
-            dispatch(setPaddleY({ side: "right", y: payload.rightPaddle.y }));
+            // On guest, avoid overwriting the locally-controlled right paddle during active play.
+            // This prevents snap-back jitter from 20Hz host snapshots.
+            if (payload.status !== "playing") {
+              dispatch(setPaddleY({ side: "right", y: payload.rightPaddle.y }));
+            }
             dispatch(setScores(payload.score));
             dispatch(setWins(payload.wins));
             dispatch(setGameStatus(payload.status));

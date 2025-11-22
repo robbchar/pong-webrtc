@@ -35,6 +35,7 @@ describe("gameSlice", () => {
     countdown: 5,
     isReady: false,
     opponentReady: false,
+    lastSnapshotTimestampMs: null,
   };
 
   it("should handle initial state", () => {

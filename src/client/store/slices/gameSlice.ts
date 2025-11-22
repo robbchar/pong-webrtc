@@ -32,6 +32,7 @@ export interface GameState {
   countdown: number;
   isReady: boolean;
   opponentReady: boolean;
+  lastSnapshotTimestampMs: number | null;
 }
 
 const initialState: GameState = {
@@ -59,6 +60,7 @@ const initialState: GameState = {
   countdown: 5,
   isReady: false,
   opponentReady: false,
+  lastSnapshotTimestampMs: null,
 };
 
 const gameSlice = createSlice({
@@ -115,7 +117,11 @@ const gameSlice = createSlice({
         countdown: initialState.countdown,
         isReady: false,
         opponentReady: false,
+        lastSnapshotTimestampMs: null,
       };
+    },
+    setLastSnapshotTimestamp: (state, action: PayloadAction<number>) => {
+      state.lastSnapshotTimestampMs = action.payload;
     },
     setCountdown: (state, action: PayloadAction<number>) => {
       state.countdown = action.payload;
@@ -142,6 +148,7 @@ export const {
   setCountdown,
   setReady,
   setOpponentReady,
+  setLastSnapshotTimestamp,
 } = gameSlice.actions;
 
 export default gameSlice.reducer;
