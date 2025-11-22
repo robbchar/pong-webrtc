@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { updateLeftPaddle, updateRightPaddle } from "@/store/slices/gameSlice";
 import { webRTCService } from "@/services/webRTCService";
 import type { PaddleMoveMessage } from "@/types/dataChannelTypes";
+import { recordGuestInputSent } from "@/hooks/useConnectionMetrics";
 
 interface UsePaddleMovementOptions {
   side: "left" | "right";
@@ -73,6 +74,7 @@ export const usePaddleMovement = ({
 
       lastSentAtMsRef.current = now;
       lastSentYRef.current = yPercent;
+      recordGuestInputSent(now);
 
       webRTCService.sendDataChannelMessage({
         type: "paddleMove",

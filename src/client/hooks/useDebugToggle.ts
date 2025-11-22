@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { toggleDebugOverlay } from "@/store/slices/connectionSlice";
+import { logger } from "@/utils/logger";
 
 const isFocusableElement = (target: EventTarget | null): boolean => {
   if (!(target instanceof HTMLElement)) {
@@ -20,6 +21,10 @@ export function useDebugToggle(): boolean {
   const debugOverlayEnabled = useAppSelector(
     (state) => state.connection.debugOverlayEnabled,
   );
+
+  useEffect(() => {
+    logger.setDebugSafeEnabled(debugOverlayEnabled);
+  }, [debugOverlayEnabled]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
