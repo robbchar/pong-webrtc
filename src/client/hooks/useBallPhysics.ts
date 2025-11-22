@@ -69,6 +69,15 @@ export const useBallPhysics = (config: BallPhysicsConfig = defaultConfig) => {
           ? speedMagnitude
           : Math.min(speedMagnitude + speedIncreasePerHit, maxSpeedMagnitude);
 
+      const getServeVelocity = (directionX: 1 | -1) => {
+        const verticalAngleRangeRad = Math.PI / 8; // ±22.5deg
+        const randomAngle = (Math.random() * 2 - 1) * verticalAngleRangeRad;
+        return {
+          velocityX: Math.cos(randomAngle) * config.speed * directionX,
+          velocityY: Math.sin(randomAngle) * config.speed,
+        };
+      };
+
       // Wall collision (top/bottom)
       if (ballTop <= 0 || ballBottom >= 100) {
         newBall.velocityY = -newBall.velocityY * config.wallBounce;
@@ -123,7 +132,7 @@ export const useBallPhysics = (config: BallPhysicsConfig = defaultConfig) => {
         const clampedHitFraction = Math.max(-1, Math.min(1, hitFraction));
         const baseReflectedAngle = Math.atan2(ball.velocityY, -ball.velocityX);
         const bounceAngle =
-          baseReflectedAngle + clampedHitFraction * config.maxAngle;
+          baseReflectedAngle + -clampedHitFraction * config.maxAngle;
 
         newBall.velocityX =
           -Math.abs(Math.cos(bounceAngle)) *
@@ -137,15 +146,13 @@ export const useBallPhysics = (config: BallPhysicsConfig = defaultConfig) => {
       // Scoring (ball fully past paddles)
       if (ballRight < 0) {
         const nextRightScore = score.right + 1;
-        const verticalServeVelocity =
-          (Math.random() * 2 - 1) * config.speed * 0.3;
+        const serveVelocity = getServeVelocity(1);
         dispatch(updateScore({ player: "right", points: nextRightScore }));
         dispatch(
           updateBall({
             x: 50,
             y: 50,
-            velocityX: config.speed,
-            velocityY: verticalServeVelocity,
+            ...serveVelocity,
           }),
         );
         return;
@@ -153,15 +160,13 @@ export const useBallPhysics = (config: BallPhysicsConfig = defaultConfig) => {
 
       if (ballLeft > 100) {
         const nextLeftScore = score.left + 1;
-        const verticalServeVelocity =
-          (Math.random() * 2 - 1) * config.speed * 0.3;
+        const serveVelocity = getServeVelocity(-1);
         dispatch(updateScore({ player: "left", points: nextLeftScore }));
         dispatch(
           updateBall({
             x: 50,
             y: 50,
-            velocityX: -config.speed,
-            velocityY: verticalServeVelocity,
+            ...serveVelocity,
           }),
         );
         return;
