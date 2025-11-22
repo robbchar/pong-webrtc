@@ -62,6 +62,12 @@ export const useBallPhysics = (config: BallPhysicsConfig = defaultConfig) => {
       const currentSpeedMagnitude = Math.hypot(ball.velocityX, ball.velocityY);
       const speedMagnitude =
         currentSpeedMagnitude > 0 ? currentSpeedMagnitude : config.speed;
+      const speedIncreasePerHit = config.speed * 0.05;
+      const maxSpeedMagnitude = config.speed * 2.5;
+      const nextSpeedMagnitude =
+        speedMagnitude >= maxSpeedMagnitude
+          ? speedMagnitude
+          : Math.min(speedMagnitude + speedIncreasePerHit, maxSpeedMagnitude);
 
       // Wall collision (top/bottom)
       if (ballTop <= 0 || ballBottom >= 100) {
@@ -97,10 +103,10 @@ export const useBallPhysics = (config: BallPhysicsConfig = defaultConfig) => {
 
         newBall.velocityX =
           Math.abs(Math.cos(bounceAngle)) *
-          speedMagnitude *
+          nextSpeedMagnitude *
           config.paddleBounce;
         newBall.velocityY =
-          Math.sin(bounceAngle) * speedMagnitude * config.paddleBounce;
+          Math.sin(bounceAngle) * nextSpeedMagnitude * config.paddleBounce;
         newBall.x = leftPaddleXMax + ballRadius;
       }
 
@@ -121,10 +127,10 @@ export const useBallPhysics = (config: BallPhysicsConfig = defaultConfig) => {
 
         newBall.velocityX =
           -Math.abs(Math.cos(bounceAngle)) *
-          speedMagnitude *
+          nextSpeedMagnitude *
           config.paddleBounce;
         newBall.velocityY =
-          Math.sin(bounceAngle) * speedMagnitude * config.paddleBounce;
+          Math.sin(bounceAngle) * nextSpeedMagnitude * config.paddleBounce;
         newBall.x = rightPaddleXMin - ballRadius;
       }
 
