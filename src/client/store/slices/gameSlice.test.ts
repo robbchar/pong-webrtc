@@ -5,6 +5,7 @@ import gameReducer, {
   updateBall,
   updateLeftPaddle,
   updateRightPaddle,
+  setPaddleY,
 } from "./gameSlice";
 import { GameStatus } from "./gameSlice";
 
@@ -181,6 +182,26 @@ describe("gameSlice", () => {
         const actual = gameReducer(initialState, updateRightPaddle(position));
         expect(actual.rightPaddle.y).toBe(position);
       });
+    });
+  });
+
+  describe("setPaddleY", () => {
+    it("should set left paddle when side is left", () => {
+      const actual = gameReducer(
+        initialState,
+        setPaddleY({ side: "left", y: 10 }),
+      );
+      expect(actual.leftPaddle.y).toBe(10);
+      expect(actual.rightPaddle.y).toBe(initialState.rightPaddle.y);
+    });
+
+    it("should set right paddle when side is right", () => {
+      const actual = gameReducer(
+        initialState,
+        setPaddleY({ side: "right", y: 90 }),
+      );
+      expect(actual.rightPaddle.y).toBe(90);
+      expect(actual.leftPaddle.y).toBe(initialState.leftPaddle.y);
     });
   });
 });

@@ -77,8 +77,14 @@ const gameSlice = createSlice({
     updateRightPaddle: (state, action: PayloadAction<number>) => {
       state.rightPaddle.y = action.payload;
     },
-    updateOpponentPaddle: (state, action: PayloadAction<{ y: number }>) => {
-      // TODO: determine whether to update left or right paddle based on player side/host authority.
+    setPaddleY: (
+      state,
+      action: PayloadAction<{ side: "left" | "right"; y: number }>,
+    ) => {
+      if (action.payload.side === "left") {
+        state.leftPaddle.y = action.payload.y;
+        return;
+      }
       state.rightPaddle.y = action.payload.y;
     },
     updateScore: (
@@ -128,7 +134,7 @@ export const {
   updateBall,
   updateLeftPaddle,
   updateRightPaddle,
-  updateOpponentPaddle,
+  setPaddleY,
   updateScore,
   setScores,
   setWins,

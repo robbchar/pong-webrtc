@@ -1,9 +1,7 @@
 import { Dispatch } from "redux";
 import {
   updateBall,
-  updateLeftPaddle,
-  updateRightPaddle,
-  updateOpponentPaddle,
+  setPaddleY,
   setScores,
   setWins,
   setCountdown,
@@ -270,7 +268,12 @@ export class WebRTCService {
           case "paddleMove": {
             if (!this.isHost) break;
             const paddleMoveMessage = message as PaddleMoveMessage;
-            dispatch(updateOpponentPaddle(paddleMoveMessage.payload));
+            dispatch(
+              setPaddleY({
+                side: "right",
+                y: paddleMoveMessage.payload.y,
+              }),
+            );
             break;
           }
           case "pauseRequest": {
@@ -292,8 +295,8 @@ export class WebRTCService {
             const gameStateMessage = message as HostGameStateMessage;
             const { payload } = gameStateMessage;
             dispatch(updateBall(payload.ball));
-            dispatch(updateLeftPaddle(payload.leftPaddle.y));
-            dispatch(updateRightPaddle(payload.rightPaddle.y));
+            dispatch(setPaddleY({ side: "left", y: payload.leftPaddle.y }));
+            dispatch(setPaddleY({ side: "right", y: payload.rightPaddle.y }));
             dispatch(setScores(payload.score));
             dispatch(setWins(payload.wins));
             dispatch(setGameStatus(payload.status));
