@@ -62,6 +62,8 @@ describe("GameBoard", () => {
       isHost: false,
       gameId: null,
       error: null,
+      selfStartIntent: false,
+      opponentStartIntent: false,
     };
 
     return configureStore({
