@@ -4,7 +4,7 @@ import { RootState } from "@/store/store";
 import { setReady, setGameStatus, resetGame } from "@/store/slices/gameSlice";
 import Paddle from "../Paddle/Paddle";
 import Ball from "../Ball/Ball";
-import { useBallMovement } from "@/hooks/useBallMovement";
+import { useBallPhysics } from "@/hooks/useBallPhysics";
 import { useCountdown } from "@/hooks/useCountdown";
 import { useHostGameStateBroadcast } from "@/hooks/useHostGameStateBroadcast";
 import { useInterpolatedGameState } from "@/hooks/useInterpolatedGameState";
@@ -36,8 +36,8 @@ const GameBoard: React.FC = () => {
   const interpolatedGameState = useInterpolatedGameState(isHost ?? false);
   const { isPortrait } = useDeviceOrientation();
 
-  // Only initialize ball movement when the game is playing
-  useBallMovement({ isHost: isHost ?? false });
+  // Host-only ball physics; guest renders interpolated snapshots.
+  useBallPhysics();
   useCountdown({ isHost: isHost ?? false });
   useHostGameStateBroadcast(isHost ?? false);
 

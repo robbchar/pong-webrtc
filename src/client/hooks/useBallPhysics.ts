@@ -19,6 +19,7 @@ const defaultConfig: BallPhysicsConfig = {
 
 export const useBallPhysics = (config: BallPhysicsConfig = defaultConfig) => {
   const dispatch = useAppDispatch();
+  const isHost = useAppSelector((state: RootState) => state.connection.isHost);
   const ball = useAppSelector((state: RootState) => state.game.ball);
   const leftPaddle = useAppSelector(
     (state: RootState) => state.game.leftPaddle,
@@ -85,6 +86,10 @@ export const useBallPhysics = (config: BallPhysicsConfig = defaultConfig) => {
   );
 
   useEffect(() => {
+    if (isHost !== true) {
+      return;
+    }
+
     const animate = () => {
       const newBall = updateBallPosition(ball, leftPaddle, rightPaddle, score);
       if (newBall) {
@@ -104,6 +109,7 @@ export const useBallPhysics = (config: BallPhysicsConfig = defaultConfig) => {
     };
   }, [
     updateBallPosition,
+    isHost,
     gameStatus,
     ball,
     leftPaddle,

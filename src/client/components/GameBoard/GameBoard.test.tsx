@@ -18,8 +18,8 @@ vi.mock("@/services/webRTCService", () => ({
 }));
 
 // Mock the hooks
-vi.mock("@/hooks/useBallMovement", () => ({
-  useBallMovement: vi.fn(),
+vi.mock("@/hooks/useBallPhysics", () => ({
+  useBallPhysics: vi.fn(),
 }));
 
 vi.mock("@/hooks/useCountdown", () => ({
