@@ -6,9 +6,9 @@ import Paddle from "../Paddle/Paddle";
 import Ball from "../Ball/Ball";
 import { useBallMovement } from "@/hooks/useBallMovement";
 import { useCountdown } from "@/hooks/useCountdown";
+import { useHostGameStateBroadcast } from "@/hooks/useHostGameStateBroadcast";
 import useDeviceOrientation from "@/hooks/useDeviceOrientation";
 import styles from "./GameBoard.module.css";
-import { webRTCService } from "@/services/webRTCService";
 import { logger } from "@/utils/logger";
 
 const GameBoard: React.FC = () => {
@@ -31,12 +31,8 @@ const GameBoard: React.FC = () => {
 
   // Only initialize ball movement when the game is playing
   useBallMovement({ isHost: isHost ?? false });
-  useCountdown();
-
-  useEffect(() => {
-    // Set up WebRTC service dispatch
-    webRTCService.setDispatch(dispatch);
-  }, [dispatch]);
+  useCountdown({ isHost: isHost ?? false });
+  useHostGameStateBroadcast(isHost ?? false);
 
   const handleReadyClick = () => {
     logger.debug("[GameBoard] Ready button clicked. States:", {
@@ -50,7 +46,7 @@ const GameBoard: React.FC = () => {
     try {
       const newReadyState = !isReady;
       dispatch(setReady(newReadyState));
-      webRTCService.sendReadyState(newReadyState);
+      // TODO: when gameplay networking resumes, send ready state over WebRTC datachannel.
     } catch (error) {
       logger.error("[GameBoard] Failed to update ready state:", {} as Error, {
         error,
