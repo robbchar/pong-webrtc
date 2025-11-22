@@ -1,12 +1,14 @@
 import { useEffect, useRef } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { webRTCService } from "@/services/webRTCService";
+import { setCountdown, setGameStatus } from "@/store/slices/gameSlice";
 import type { HostGameStateMessage } from "@/types/dataChannelTypes";
 
 const BROADCAST_INTERVAL_MS = 50;
 
 export const useHostGameStateBroadcast = (isHost: boolean) => {
+  const dispatch = useDispatch();
   const dataChannelStatus = useSelector(
     (state: RootState) => state.connection.dataChannelStatus,
   );
@@ -16,6 +18,31 @@ export const useHostGameStateBroadcast = (isHost: boolean) => {
   useEffect(() => {
     latestGameStateRef.current = gameState;
   }, [gameState]);
+
+  useEffect(() => {
+    if (!isHost) return;
+    if (dataChannelStatus !== "open") return;
+
+    const bothReady = gameState.isReady && gameState.opponentReady;
+
+    if (gameState.status === "waiting" && bothReady) {
+      dispatch(setCountdown(5));
+      dispatch(setGameStatus("countdown"));
+      return;
+    }
+
+    if (gameState.status === "countdown" && !bothReady) {
+      dispatch(setGameStatus("waiting"));
+      dispatch(setCountdown(5));
+    }
+  }, [
+    isHost,
+    dataChannelStatus,
+    gameState.status,
+    gameState.isReady,
+    gameState.opponentReady,
+    dispatch,
+  ]);
 
   useEffect(() => {
     if (!isHost) return;

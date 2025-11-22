@@ -110,23 +110,9 @@ const gameSlice = createSlice({
     },
     setReady: (state, action: PayloadAction<boolean>) => {
       state.isReady = action.payload;
-      // If both players are ready, start the countdown
-      if (state.isReady && state.opponentReady) {
-        state.status = "countdown";
-      } else if (state.status === "countdown" && !state.isReady) {
-        // If a player becomes not ready during countdown, go back to waiting
-        state.status = "waiting";
-      }
     },
     setOpponentReady: (state, action: PayloadAction<boolean>) => {
       state.opponentReady = action.payload;
-      // If both players are ready, start the countdown
-      if (state.isReady && state.opponentReady) {
-        state.status = "countdown";
-      } else if (state.status === "countdown" && !state.opponentReady) {
-        // If a player becomes not ready during countdown, go back to waiting
-        state.status = "waiting";
-      }
     },
   },
 });
