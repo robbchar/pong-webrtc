@@ -33,9 +33,12 @@ describe("useBallPhysics", () => {
         peerStatus: "connected",
         peerId: "test-peer",
         isHost: true,
+        playerSide: "left",
         gameId: "test-game",
         dataChannelStatus: "open",
         error: null,
+        selfStartIntent: false,
+        opponentStartIntent: false,
       },
     } as RootState,
   });

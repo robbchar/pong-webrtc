@@ -18,6 +18,7 @@ const initialState: ConnectionState = {
   dataChannelStatus: "closed" as const,
   peerId: null,
   isHost: null,
+  playerSide: null,
   gameId: null,
   error: null,
   selfStartIntent: false,
@@ -64,6 +65,7 @@ describe("connectionSlice", () => {
       const actual = connectionReducer(initialState, setPeerConnected(payload));
       expect(actual.peerId).toEqual(payload.peerId);
       expect(actual.isHost).toEqual(payload.isHost);
+      expect(actual.playerSide).toEqual("left");
       expect(actual.peerStatus).toEqual("connected" as const);
       expect(actual.error).toBeNull(); // Should clear errors
     });
@@ -82,6 +84,7 @@ describe("connectionSlice", () => {
       const actual = connectionReducer(connectedState, setPeerDisconnected());
       expect(actual.peerId).toBeNull();
       expect(actual.isHost).toBe(false);
+      expect(actual.playerSide).toBeNull();
       expect(actual.peerStatus).toEqual("disconnected" as const);
       expect(actual.selfStartIntent).toBe(false);
       expect(actual.opponentStartIntent).toBe(false);

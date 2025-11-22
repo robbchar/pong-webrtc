@@ -60,6 +60,7 @@ describe("GameBoard", () => {
       dataChannelStatus: "closed",
       peerId: null,
       isHost: false,
+      playerSide: "right",
       gameId: null,
       error: null,
       selfStartIntent: false,
