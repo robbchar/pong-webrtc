@@ -61,6 +61,7 @@ describe("LobbyChat", () => {
         peerStatus: "idle",
         peerId: null,
         isHost: null,
+        playerSide: null,
         gameId: null,
         dataChannelStatus: "closed",
         error: null,

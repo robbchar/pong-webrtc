@@ -8,11 +8,14 @@ export type ConnectionStatus =
 
 export type DataChannelStatus = "opening" | "open" | "closing" | "closed";
 
+export type PlayerSide = "left" | "right";
+
 export interface ConnectionState {
   signalingStatus: SignalingStatus; // Track WS connection
   peerStatus: "idle" | "connecting" | "connected" | "failed" | "disconnected";
   peerId: string | null;
   isHost: boolean | null;
+  playerSide: PlayerSide | null;
   gameId: string | null;
   dataChannelStatus: "closed" | "connecting" | "open" | "error";
   error: string | null;
@@ -20,11 +23,22 @@ export interface ConnectionState {
   opponentStartIntent: boolean;
 }
 
+const derivePlayerSide = (isHost: boolean | null): PlayerSide | null => {
+  if (isHost === true) {
+    return "left";
+  }
+  if (isHost === false) {
+    return "right";
+  }
+  return null;
+};
+
 const initialState: ConnectionState = {
   signalingStatus: SignalingStatus.CLOSED,
   peerStatus: "idle",
   peerId: null,
   isHost: null,
+  playerSide: null,
   gameId: null,
   dataChannelStatus: "closed",
   error: null,
@@ -48,6 +62,7 @@ const connectionSlice = createSlice({
     ) => {
       state.peerId = action.payload.peerId;
       state.isHost = action.payload.isHost;
+      state.playerSide = derivePlayerSide(action.payload.isHost);
       state.peerStatus = "connected";
       state.error = null;
       state.opponentStartIntent = false;
@@ -56,6 +71,7 @@ const connectionSlice = createSlice({
     setPeerDisconnected: (state) => {
       state.peerId = null;
       state.isHost = false;
+      state.playerSide = null;
       state.peerStatus = "disconnected";
       state.dataChannelStatus = "closed";
       state.selfStartIntent = false;
@@ -82,6 +98,7 @@ const connectionSlice = createSlice({
     },
     setIsHost: (state, action: PayloadAction<boolean>) => {
       state.isHost = action.payload;
+      state.playerSide = derivePlayerSide(action.payload);
     },
     setSelfStartIntent: (state, action: PayloadAction<boolean>) => {
       state.selfStartIntent = action.payload;

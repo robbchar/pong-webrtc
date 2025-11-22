@@ -36,6 +36,7 @@ describe("usePaddleMovement", () => {
       dataChannelStatus: "closed",
       peerId: "p1",
       isHost: true,
+      playerSide: "left",
       gameId: "g1",
       error: null,
       selfStartIntent: false,
