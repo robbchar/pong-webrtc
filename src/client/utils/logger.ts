@@ -17,6 +17,7 @@ interface LoggerConfig {
 class Logger {
   private static instance: Logger;
   private config: LoggerConfig;
+  private debugSafeEnabled: boolean = false;
 
   private constructor() {
     this.config = {
@@ -52,10 +53,21 @@ class Logger {
     this.config = { ...this.config, ...config };
   }
 
+  public setDebugSafeEnabled(enabled: boolean): void {
+    this.debugSafeEnabled = enabled;
+  }
+
   public debug(message: string, metadata?: LogMetadata): void {
     if (this.shouldLog(LogLevel.DEBUG)) {
       console.debug(this.formatMessage(LogLevel.DEBUG, message, metadata));
     }
+  }
+
+  public debugSafe(message: string, metadata?: LogMetadata): void {
+    if (!this.debugSafeEnabled) {
+      return;
+    }
+    console.debug(this.formatMessage(LogLevel.DEBUG, message, metadata));
   }
 
   public info(message: string, metadata?: LogMetadata): void {

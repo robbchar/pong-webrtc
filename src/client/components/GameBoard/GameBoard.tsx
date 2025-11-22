@@ -8,8 +8,10 @@ import { useBallPhysics } from "@/hooks/useBallPhysics";
 import { useCountdown } from "@/hooks/useCountdown";
 import { useHostGameStateBroadcast } from "@/hooks/useHostGameStateBroadcast";
 import { useInterpolatedGameState } from "@/hooks/useInterpolatedGameState";
+import { useDebugToggle } from "@/hooks/useDebugToggle";
 import useDeviceOrientation from "@/hooks/useDeviceOrientation";
 import { webRTCService } from "@/services/webRTCService";
+import DebugOverlay from "../DebugOverlay/DebugOverlay";
 import type {
   PauseRequestMessage,
   ReadyStatusMessage,
@@ -34,6 +36,7 @@ const GameBoard: React.FC = () => {
     (state: RootState) => state.game,
   );
   const interpolatedGameState = useInterpolatedGameState(isHost ?? false);
+  const debugOverlayEnabled = useDebugToggle();
   const { isPortrait } = useDeviceOrientation();
 
   // Host-only ball physics; guest renders interpolated snapshots.
@@ -245,6 +248,8 @@ const GameBoard: React.FC = () => {
 
       {/* Game overlays */}
       {renderOverlay()}
+
+      {debugOverlayEnabled && <DebugOverlay />}
 
       <div className={styles.roleBadge} data-testid="role-badge">
         {isHost === true ? "Host" : isHost === false ? "Guest" : "Unknown"}
