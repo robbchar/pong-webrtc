@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/store/store";
 import { setReady, setGameStatus, resetGame } from "@/store/slices/gameSlice";
@@ -9,7 +9,10 @@ import { useCountdown } from "@/hooks/useCountdown";
 import { useHostGameStateBroadcast } from "@/hooks/useHostGameStateBroadcast";
 import useDeviceOrientation from "@/hooks/useDeviceOrientation";
 import { webRTCService } from "@/services/webRTCService";
-import type { ReadyStatusMessage } from "@/types/dataChannelTypes";
+import type {
+  PauseRequestMessage,
+  ReadyStatusMessage,
+} from "@/types/dataChannelTypes";
 import styles from "./GameBoard.module.css";
 import { logger } from "@/utils/logger";
 
@@ -35,6 +38,14 @@ const GameBoard: React.FC = () => {
   useBallMovement({ isHost: isHost ?? false });
   useCountdown({ isHost: isHost ?? false });
   useHostGameStateBroadcast(isHost ?? false);
+
+  const sendPauseRequest = (requestedStatus: "paused" | "playing") => {
+    if (dataChannelStatus !== "open") return;
+    webRTCService.sendDataChannelMessage({
+      type: "pauseRequest",
+      payload: { requestedStatus },
+    } satisfies PauseRequestMessage);
+  };
 
   const handleReadyClick = () => {
     logger.debug("[GameBoard] Ready button clicked. States:", {
@@ -108,7 +119,13 @@ const GameBoard: React.FC = () => {
           <div className={styles.message}>PAUSED</div>
           <button
             className={styles.resumeButton}
-            onClick={() => dispatch(setGameStatus("playing"))}
+            onClick={() => {
+              if (isHost) {
+                dispatch(setGameStatus("playing"));
+              } else {
+                sendPauseRequest("playing");
+              }
+            }}
           >
             RESUME
           </button>
@@ -154,6 +171,7 @@ const GameBoard: React.FC = () => {
     <div
       className={`${styles.gameBoard} ${isPortrait ? styles.portrait : styles.landscape}`}
       data-testid="game-board"
+      id="game-board"
     >
       <div className={styles.centerLine} data-testid="center-line" />
       <Paddle side="left" position={leftPaddle.y} />
@@ -192,7 +210,13 @@ const GameBoard: React.FC = () => {
       {status === "playing" && (
         <button
           className={styles.pauseButton}
-          onClick={() => dispatch(setGameStatus("paused"))}
+          onClick={() => {
+            if (isHost) {
+              dispatch(setGameStatus("paused"));
+            } else {
+              sendPauseRequest("paused");
+            }
+          }}
         >
           ⏸
         </button>
@@ -200,6 +224,10 @@ const GameBoard: React.FC = () => {
 
       {/* Game overlays */}
       {renderOverlay()}
+
+      <div className={styles.roleBadge} data-testid="role-badge">
+        {isHost === true ? "Host" : isHost === false ? "Guest" : "Unknown"}
+      </div>
     </div>
   );
 };

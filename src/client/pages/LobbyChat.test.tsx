@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
+import { MemoryRouter } from "react-router-dom";
 import LobbyChat from "./LobbyChat";
 import gameReducer from "@/store/slices/gameSlice";
 import connectionReducer from "@/store/slices/connectionSlice";
@@ -43,9 +44,11 @@ describe("LobbyChat", () => {
   it("renders identity and room label", () => {
     const store = createTestStore();
     render(
-      <Provider store={store}>
-        <LobbyChat />
-      </Provider>,
+      <MemoryRouter>
+        <Provider store={store}>
+          <LobbyChat />
+        </Provider>
+      </MemoryRouter>,
     );
     expect(screen.getByText("Player-c1")).toBeInTheDocument();
     expect(screen.getByText(/Room-/, { exact: false })).toBeInTheDocument();
@@ -66,9 +69,11 @@ describe("LobbyChat", () => {
       },
     });
     render(
-      <Provider store={store}>
-        <LobbyChat />
-      </Provider>,
+      <MemoryRouter>
+        <Provider store={store}>
+          <LobbyChat />
+        </Provider>
+      </MemoryRouter>,
     );
     expect(screen.getByLabelText("Message input")).toBeDisabled();
     expect(screen.getByRole("button", { name: "Send" })).toBeDisabled();
@@ -81,9 +86,11 @@ describe("LobbyChat", () => {
     const { signalingService } = await import("@/services/signalingService");
 
     render(
-      <Provider store={store}>
-        <LobbyChat />
-      </Provider>,
+      <MemoryRouter>
+        <Provider store={store}>
+          <LobbyChat />
+        </Provider>
+      </MemoryRouter>,
     );
 
     const input = screen.getByLabelText("Message input");

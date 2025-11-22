@@ -4,6 +4,7 @@ export type DataChannelMessage =
   | DcReadyMessage
   | ReadyStatusMessage
   | PaddleMoveMessage
+  | PauseRequestMessage
   | HostGameStateMessage;
 
 export interface DcReadyMessage {
@@ -21,6 +22,13 @@ export interface PaddleMoveMessage {
   type: "paddleMove";
   payload: {
     y: number;
+  };
+}
+
+export interface PauseRequestMessage {
+  type: "pauseRequest";
+  payload: {
+    requestedStatus: "paused" | "playing";
   };
 }
 

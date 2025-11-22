@@ -23,19 +23,15 @@ export const useHostGameStateBroadcast = (isHost: boolean) => {
     if (!isHost) return;
     if (dataChannelStatus !== "open") return;
 
-    if (
-      gameState.status === "waiting" &&
-      gameState.isReady &&
-      gameState.opponentReady
-    ) {
+    const bothReady = gameState.isReady && gameState.opponentReady;
+
+    if (gameState.status === "waiting" && bothReady) {
       dispatch(setCountdown(5));
       dispatch(setGameStatus("countdown"));
+      return;
     }
 
-    if (
-      gameState.status === "countdown" &&
-      (!gameState.isReady || !gameState.opponentReady)
-    ) {
+    if (gameState.status === "countdown" && !bothReady) {
       dispatch(setGameStatus("waiting"));
       dispatch(setCountdown(5));
     }

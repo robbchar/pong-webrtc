@@ -1,146 +1,164 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
+import type {
+  MouseEvent as ReactMouseEvent,
+  TouchEvent as ReactTouchEvent,
+} from "react";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { updateLeftPaddle, updateRightPaddle } from "@/store/slices/gameSlice";
+import { webRTCService } from "@/services/webRTCService";
+import type { PaddleMoveMessage } from "@/types/dataChannelTypes";
 
-interface PaddleMovementConfig {
-  speed: number;
-  smoothing: number;
-  minY: number;
-  maxY: number;
+interface UsePaddleMovementOptions {
+  side: "left" | "right";
+  boardHeight: number;
+  paddleHeight: number;
+  isLocalPlayer: boolean;
 }
 
-const DEFAULT_CONFIG: PaddleMovementConfig = {
-  speed: 10,
-  smoothing: 0.2,
-  minY: 0,
-  maxY: 400, // This should match the canvas height minus paddle height
-};
+const SEND_INTERVAL_MS = 33;
 
-export const usePaddleMovement = (
-  paddleId: "left" | "right",
-  config: Partial<PaddleMovementConfig> = {},
-) => {
+export const usePaddleMovement = ({
+  side,
+  boardHeight,
+  paddleHeight,
+  isLocalPlayer,
+}: UsePaddleMovementOptions) => {
   const dispatch = useAppDispatch();
-  const currentConfig = { ...DEFAULT_CONFIG, ...config };
-  const targetPosition = useRef<number>(0);
-  const currentPosition = useRef<number>(0);
-  const animationFrameId = useRef<number | undefined>(undefined);
-  const [isMoving, setIsMoving] = useState(false);
-
-  const paddle = useAppSelector((state) =>
-    paddleId === "left" ? state.game.leftPaddle : state.game.rightPaddle,
+  const { isHost, dataChannelStatus } = useAppSelector(
+    (state) => state.connection,
   );
+  const gameStatus = useAppSelector((state) => state.game.status);
 
-  // Initialize positions
-  useEffect(() => {
-    targetPosition.current = paddle.y;
-    currentPosition.current = paddle.y;
-  }, [paddle.y]);
+  const isDraggingRef = useRef(false);
+  const lastSentAtMsRef = useRef(0);
+  const lastSentYRef = useRef<number | null>(null);
 
-  const updateTargetPosition = useCallback(
-    (clientY: number, rect: DOMRect) => {
-      if (!isMoving) return;
-
-      const relativeY = clientY - rect.top;
-      targetPosition.current = Math.max(
-        currentConfig.minY,
-        Math.min(currentConfig.maxY, relativeY),
-      );
+  const clampYPercent = useCallback(
+    (yPercent: number) => {
+      const maxY = Math.max(0, boardHeight - paddleHeight);
+      return Math.max(0, Math.min(maxY, yPercent));
     },
-    [currentConfig.minY, currentConfig.maxY, isMoving],
+    [boardHeight, paddleHeight],
   );
 
-  const handleMouseMove = useCallback(
-    (event: MouseEvent) => {
-      const rect = (event.target as HTMLElement).getBoundingClientRect();
-      updateTargetPosition(event.clientY, rect);
-    },
-    [updateTargetPosition],
-  );
-
-  const handleTouchMove = useCallback(
-    (event: TouchEvent) => {
-      const rect = (event.target as HTMLElement).getBoundingClientRect();
-      updateTargetPosition(event.touches[0].clientY, rect);
-    },
-    [updateTargetPosition],
-  );
-
-  const startMovement = useCallback(() => {
-    setIsMoving(true);
-  }, []);
-
-  const stopMovement = useCallback(() => {
-    setIsMoving(false);
-  }, []);
-
-  // Animation loop for smooth movement
-  const updatePosition = useCallback(() => {
-    const positionChanged =
-      Math.abs(currentPosition.current - targetPosition.current) > 0.1;
-
-    if (isMoving && positionChanged) {
-      // Smooth transition using linear interpolation
-      const delta =
-        (targetPosition.current - currentPosition.current) *
-        currentConfig.smoothing;
-      currentPosition.current += delta;
-      const roundedPosition = Math.round(currentPosition.current);
-
-      // Update paddle position in Redux store
-      if (paddleId === "left") {
-        dispatch(updateLeftPaddle(roundedPosition));
+  const updatePaddlePosition = useCallback(
+    (yPercent: number) => {
+      if (side === "left") {
+        dispatch(updateLeftPaddle(yPercent));
       } else {
-        dispatch(updateRightPaddle(roundedPosition));
+        dispatch(updateRightPaddle(yPercent));
       }
-      // TODO: when gameplay networking resumes, send paddleMove input over WebRTC datachannel.
-    }
 
-    // Continue the animation loop
-    animationFrameId.current = window.requestAnimationFrame(updatePosition);
-  }, [dispatch, paddleId, currentConfig.smoothing, isMoving]);
+      const shouldSendNetworkInput =
+        !isHost &&
+        isLocalPlayer &&
+        side === "right" &&
+        dataChannelStatus === "open" &&
+        gameStatus === "playing";
 
-  // Set up event listeners and animation loop
+      if (!shouldSendNetworkInput) {
+        return;
+      }
+
+      const now = Date.now();
+      const lastSentAtMs = lastSentAtMsRef.current;
+
+      if (now - lastSentAtMs < SEND_INTERVAL_MS) {
+        return;
+      }
+
+      if (lastSentYRef.current !== null && lastSentYRef.current === yPercent) {
+        return;
+      }
+
+      lastSentAtMsRef.current = now;
+      lastSentYRef.current = yPercent;
+
+      webRTCService.sendDataChannelMessage({
+        type: "paddleMove",
+        payload: { y: yPercent },
+      } satisfies PaddleMoveMessage);
+    },
+    [dispatch, side, isHost, isLocalPlayer, dataChannelStatus, gameStatus],
+  );
+
+  const computeYPercentFromClientY = useCallback(
+    (clientY: number) => {
+      const boardElement = document.getElementById("game-board");
+      if (!boardElement) return null;
+
+      const rect = boardElement.getBoundingClientRect();
+      const relativeY = clientY - rect.top;
+      const percent = (relativeY / rect.height) * boardHeight;
+      return clampYPercent(percent);
+    },
+    [boardHeight, clampYPercent],
+  );
+
+  const handlePointerMove = useCallback(
+    (clientY: number) => {
+      const yPercent = computeYPercentFromClientY(clientY);
+      if (yPercent === null) return;
+      updatePaddlePosition(yPercent);
+    },
+    [computeYPercentFromClientY, updatePaddlePosition],
+  );
+
+  const stopDragging = useCallback(() => {
+    isDraggingRef.current = false;
+  }, []);
+
   useEffect(() => {
-    const element = document.getElementById("game-canvas");
-    if (!element) return;
+    if (!isLocalPlayer) return;
+    if (gameStatus !== "playing" && gameStatus !== "paused") return;
 
-    element.addEventListener("mousemove", handleMouseMove);
-    element.addEventListener("touchmove", handleTouchMove);
-    element.addEventListener("mousedown", startMovement);
-    element.addEventListener("touchstart", startMovement);
-    element.addEventListener("mouseup", stopMovement);
-    element.addEventListener("touchend", stopMovement);
-    element.addEventListener("mouseleave", stopMovement);
+    const onMouseMove = (event: MouseEvent) => {
+      if (!isDraggingRef.current) return;
+      handlePointerMove(event.clientY);
+    };
 
-    // Start animation loop
-    animationFrameId.current = window.requestAnimationFrame(updatePosition);
+    const onTouchMove = (event: TouchEvent) => {
+      if (!isDraggingRef.current) return;
+      if (event.touches.length === 0) return;
+      handlePointerMove(event.touches[0].clientY);
+    };
+
+    const onMouseUp = () => stopDragging();
+    const onTouchEnd = () => stopDragging();
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("touchmove", onTouchMove);
+    window.addEventListener("mouseup", onMouseUp);
+    window.addEventListener("touchend", onTouchEnd);
 
     return () => {
-      element.removeEventListener("mousemove", handleMouseMove);
-      element.removeEventListener("touchmove", handleTouchMove);
-      element.removeEventListener("mousedown", startMovement);
-      element.removeEventListener("touchstart", startMovement);
-      element.removeEventListener("mouseup", stopMovement);
-      element.removeEventListener("touchend", stopMovement);
-      element.removeEventListener("mouseleave", stopMovement);
-
-      if (animationFrameId.current !== undefined) {
-        window.cancelAnimationFrame(animationFrameId.current);
-        animationFrameId.current = undefined;
-      }
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("touchmove", onTouchMove);
+      window.removeEventListener("mouseup", onMouseUp);
+      window.removeEventListener("touchend", onTouchEnd);
     };
-  }, [
-    handleMouseMove,
-    handleTouchMove,
-    startMovement,
-    stopMovement,
-    updatePosition,
-  ]);
+  }, [isLocalPlayer, gameStatus, handlePointerMove, stopDragging]);
 
-  return {
-    startMovement,
-    stopMovement,
-    isMoving,
-  };
+  const handleMouseDown = useCallback(
+    (event: ReactMouseEvent) => {
+      if (!isLocalPlayer) return;
+      if (gameStatus !== "playing" && gameStatus !== "paused") return;
+      isDraggingRef.current = true;
+      handlePointerMove(event.clientY);
+    },
+    [isLocalPlayer, gameStatus, handlePointerMove],
+  );
+
+  const handleTouchStart = useCallback(
+    (event: ReactTouchEvent) => {
+      if (!isLocalPlayer) return;
+      if (gameStatus !== "playing" && gameStatus !== "paused") return;
+      if (event.touches.length === 0) return;
+      isDraggingRef.current = true;
+      handlePointerMove(event.touches[0].clientY);
+    },
+    [isLocalPlayer, gameStatus, handlePointerMove],
+  );
+
+  return { handleMouseDown, handleTouchStart };
 };

@@ -7,6 +7,7 @@ import {
   updateScore,
   setCountdown,
   setGameStatus,
+  setReady,
   setOpponentReady,
 } from "@/store/slices/gameSlice";
 import { addSystemMessage } from "@/store/slices/chatSlice";
@@ -25,6 +26,7 @@ import type {
   DcReadyMessage,
   HostGameStateMessage,
   PaddleMoveMessage,
+  PauseRequestMessage,
   ReadyStatusMessage,
 } from "@/types/dataChannelTypes";
 
@@ -268,6 +270,14 @@ export class WebRTCService {
             if (!this.isHost) break;
             const paddleMoveMessage = message as PaddleMoveMessage;
             dispatch(updateOpponentPaddle(paddleMoveMessage.payload));
+            break;
+          }
+          case "pauseRequest": {
+            if (!this.isHost) break;
+            const pauseRequestMessage = message as PauseRequestMessage;
+            dispatch(
+              setGameStatus(pauseRequestMessage.payload.requestedStatus),
+            );
             break;
           }
           case "readyStatus": {

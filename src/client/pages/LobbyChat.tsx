@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { RootState } from "@/store/store";
 import { signalingService } from "@/services/signalingService";
 import styles from "./LobbyChat.module.css";
 
 const LobbyChat: React.FC = () => {
+  const navigate = useNavigate();
   const {
     signalingStatus,
     error,
@@ -20,6 +22,12 @@ const LobbyChat: React.FC = () => {
 
   const [draftMessage, setDraftMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (dataChannelStatus === "open") {
+      navigate("/game");
+    }
+  }, [dataChannelStatus, navigate]);
 
   useEffect(() => {
     const scrollTarget = messagesEndRef.current;

@@ -11,6 +11,12 @@ import GameBoard from "./GameBoard";
 import styles from "./GameBoard.module.css";
 import useDeviceOrientation from "@/hooks/useDeviceOrientation";
 
+vi.mock("@/services/webRTCService", () => ({
+  webRTCService: {
+    sendDataChannelMessage: vi.fn(),
+  },
+}));
+
 // Mock the hooks
 vi.mock("@/hooks/useBallMovement", () => ({
   useBallMovement: vi.fn(),
@@ -243,16 +249,60 @@ describe("GameBoard", () => {
   });
 
   it("should handle pause button click", async () => {
-    const store = createMockStore({ game: { status: "playing" } });
+    const store = createMockStore({
+      game: { status: "playing" },
+      connection: { isHost: true },
+    });
     renderWithStore(store);
     fireEvent.click(await screen.findByText("⏸"));
     expect(store.getState().game.status).toBe("paused");
   });
 
   it("should handle resume button click", async () => {
-    const store = createMockStore({ game: { status: "paused" } });
+    const store = createMockStore({
+      game: { status: "paused" },
+      connection: { isHost: true },
+    });
     renderWithStore(store);
     fireEvent.click(await screen.findByText("RESUME"));
     expect(store.getState().game.status).toBe("playing");
+  });
+
+  it("should send pause request when guest clicks pause", async () => {
+    const store = createMockStore({
+      game: { status: "playing" },
+      connection: {
+        isHost: false,
+        dataChannelStatus: "open",
+        peerStatus: "connected",
+      },
+    });
+    const { webRTCService } = await import("@/services/webRTCService");
+    renderWithStore(store);
+    fireEvent.click(await screen.findByText("⏸"));
+    expect(webRTCService.sendDataChannelMessage).toHaveBeenCalledWith({
+      type: "pauseRequest",
+      payload: { requestedStatus: "paused" },
+    });
+    expect(store.getState().game.status).toBe("playing");
+  });
+
+  it("should send resume request when guest clicks resume", async () => {
+    const store = createMockStore({
+      game: { status: "paused" },
+      connection: {
+        isHost: false,
+        dataChannelStatus: "open",
+        peerStatus: "connected",
+      },
+    });
+    const { webRTCService } = await import("@/services/webRTCService");
+    renderWithStore(store);
+    fireEvent.click(await screen.findByText("RESUME"));
+    expect(webRTCService.sendDataChannelMessage).toHaveBeenCalledWith({
+      type: "pauseRequest",
+      payload: { requestedStatus: "playing" },
+    });
+    expect(store.getState().game.status).toBe("paused");
   });
 });
