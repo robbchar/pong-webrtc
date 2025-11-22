@@ -21,6 +21,7 @@ export interface ConnectionState {
   error: string | null;
   selfStartIntent: boolean;
   opponentStartIntent: boolean;
+  debugOverlayEnabled: boolean;
 }
 
 const derivePlayerSide = (isHost: boolean | null): PlayerSide | null => {
@@ -44,6 +45,7 @@ const initialState: ConnectionState = {
   error: null,
   selfStartIntent: false,
   opponentStartIntent: false,
+  debugOverlayEnabled: false,
 };
 
 const connectionSlice = createSlice({
@@ -106,6 +108,9 @@ const connectionSlice = createSlice({
     setOpponentStartIntent: (state, action: PayloadAction<boolean>) => {
       state.opponentStartIntent = action.payload;
     },
+    toggleDebugOverlay: (state) => {
+      state.debugOverlayEnabled = !state.debugOverlayEnabled;
+    },
     // We might add specific peer connection status updates later (e.g., connecting, failed)
   },
 });
@@ -123,5 +128,6 @@ export const {
   setIsHost,
   setSelfStartIntent,
   setOpponentStartIntent,
+  toggleDebugOverlay,
 } = connectionSlice.actions;
 export default connectionSlice.reducer;

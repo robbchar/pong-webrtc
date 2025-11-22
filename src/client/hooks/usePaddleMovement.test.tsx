@@ -42,6 +42,7 @@ describe("usePaddleMovement", () => {
       error: null,
       selfStartIntent: false,
       opponentStartIntent: false,
+      debugOverlayEnabled: false,
     };
 
     return configureStore({
