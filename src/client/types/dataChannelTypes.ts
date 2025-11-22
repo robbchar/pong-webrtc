@@ -3,6 +3,7 @@ import type { GameState } from "@/store/slices/gameSlice";
 export type DataChannelMessage =
   | DcReadyMessage
   | PaddleMoveMessage
+  | PauseRequestMessage
   | HostGameStateMessage;
 
 export interface DcReadyMessage {
@@ -13,6 +14,13 @@ export interface PaddleMoveMessage {
   type: "paddleMove";
   payload: {
     y: number;
+  };
+}
+
+export interface PauseRequestMessage {
+  type: "pauseRequest";
+  payload: {
+    requestedStatus: "paused" | "playing";
   };
 }
 
