@@ -123,13 +123,15 @@ export const useBallPhysics = (config: BallPhysicsConfig = defaultConfig) => {
       // Scoring (ball fully past paddles)
       if (ballRight < 0) {
         const nextRightScore = score.right + 1;
+        const verticalServeVelocity =
+          (Math.random() * 2 - 1) * config.speed * 0.3;
         dispatch(updateScore({ player: "right", points: nextRightScore }));
         dispatch(
           updateBall({
             x: 50,
             y: 50,
             velocityX: config.speed,
-            velocityY: 0,
+            velocityY: verticalServeVelocity,
           }),
         );
         return;
@@ -137,13 +139,15 @@ export const useBallPhysics = (config: BallPhysicsConfig = defaultConfig) => {
 
       if (ballLeft > 100) {
         const nextLeftScore = score.left + 1;
+        const verticalServeVelocity =
+          (Math.random() * 2 - 1) * config.speed * 0.3;
         dispatch(updateScore({ player: "left", points: nextLeftScore }));
         dispatch(
           updateBall({
             x: 50,
             y: 50,
             velocityX: -config.speed,
-            velocityY: 0,
+            velocityY: verticalServeVelocity,
           }),
         );
         return;
