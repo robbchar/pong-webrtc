@@ -41,6 +41,7 @@ describe("rootReducer", () => {
       dataChannelStatus: "closed",
       peerId: null,
       isHost: null,
+      playerSide: null,
       gameId: null,
       error: null,
       selfStartIntent: false,
