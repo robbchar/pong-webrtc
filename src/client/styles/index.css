@@ -48,10 +48,10 @@ select {
   --accent-color: #888888;
   --game-width: 800px;
   --game-height: 600px;
-  --paddle-width: 15px;
-  --paddle-height: 80px;
-  --paddle-margin: 20px;
-  --ball-size: 15px;
+  --paddle-width: 2%;
+  --paddle-height: 15%;
+  --paddle-margin: 0%;
+  --ball-size: 2%;
 }
 
 body {

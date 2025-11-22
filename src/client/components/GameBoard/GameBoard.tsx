@@ -192,9 +192,7 @@ const GameBoard: React.FC = () => {
       <Paddle
         side="right"
         disableTransition={!(isHost ?? false)}
-        position={
-          (isHost ?? false) ? rightPaddle.y : interpolatedGameState.rightPaddleY
-        }
+        position={(isHost ?? false) ? rightPaddle.y : rightPaddle.y}
       />
       <Ball
         x={(isHost ?? false) ? ball.x : interpolatedGameState.ball.x}

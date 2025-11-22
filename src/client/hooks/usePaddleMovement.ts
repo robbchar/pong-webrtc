@@ -90,9 +90,10 @@ export const usePaddleMovement = ({
       const rect = boardElement.getBoundingClientRect();
       const relativeY = clientY - rect.top;
       const percent = (relativeY / rect.height) * boardHeight;
-      return clampYPercent(percent);
+      const centeredPercent = percent - paddleHeight / 2;
+      return clampYPercent(centeredPercent);
     },
-    [boardHeight, clampYPercent],
+    [boardHeight, clampYPercent, paddleHeight],
   );
 
   const handlePointerMove = useCallback(
