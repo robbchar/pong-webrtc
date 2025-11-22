@@ -3,13 +3,14 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { setGameStatus, setCountdown } from "@/store/slices/gameSlice";
 
-export const useCountdown = () => {
+export const useCountdown = ({ isHost = true }: { isHost?: boolean } = {}) => {
   const dispatch = useDispatch();
   const status = useSelector((state: RootState) => state.game.status);
   const countdown = useSelector((state: RootState) => state.game.countdown);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    if (!isHost) return;
     if (status === "countdown") {
       timerRef.current = setInterval(() => {
         dispatch(setCountdown(countdown - 1));
@@ -26,7 +27,7 @@ export const useCountdown = () => {
         timerRef.current = null;
       }
     };
-  }, [status, countdown, dispatch]);
+  }, [status, countdown, dispatch, isHost]);
 
   return countdown;
 };

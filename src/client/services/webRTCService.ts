@@ -1,8 +1,15 @@
 import { Dispatch } from "redux";
 import {
+  updateBall,
+  updateLeftPaddle,
+  updateRightPaddle,
   updateOpponentPaddle,
+  updateScore,
+  setCountdown,
+  setGameStatus,
   setOpponentReady,
 } from "@/store/slices/gameSlice";
+import { addSystemMessage } from "@/store/slices/chatSlice";
 import { SignalingStatus } from "@/types/signalingTypes";
 import { signalingService } from "./signalingService";
 import {
@@ -13,6 +20,12 @@ import {
   setPeerConnected,
 } from "@/store/slices/connectionSlice";
 import { logger } from "@/utils/logger";
+import type {
+  DataChannelMessage,
+  DcReadyMessage,
+  HostGameStateMessage,
+  PaddleMoveMessage,
+} from "@/types/dataChannelTypes";
 
 // Configuration for STUN servers (Google's public servers)
 const peerConnectionConfig: RTCConfiguration = {
@@ -32,7 +45,6 @@ export class WebRTCService {
   private configuration: RTCConfiguration;
   private offerRetryCount: number = 0;
   private readonly MAX_OFFER_RETRIES = 3;
-  private _queuedReadyState: boolean | null = null;
 
   constructor(configuration: RTCConfiguration) {
     this.configuration = configuration;
@@ -219,10 +231,9 @@ export class WebRTCService {
     this.dataChannel.onopen = () => {
       logger.info("[RTCDataChannel] Channel opened");
       dispatch(setDataChannelStatus("open"));
-      if (this._queuedReadyState !== null) {
-        this.sendReadyState(this._queuedReadyState);
-        this._queuedReadyState = null;
-      }
+      this.sendDataChannelMessage({
+        type: "dc_ready",
+      } satisfies DcReadyMessage);
     };
 
     this.dataChannel.onclose = () => {
@@ -237,21 +248,48 @@ export class WebRTCService {
 
     this.dataChannel.onmessage = (event) => {
       try {
-        const message = JSON.parse(event.data);
+        const message = JSON.parse(event.data) as DataChannelMessage;
         logger.info("[RTCDataChannel] Received message:", {
           messageType: message.type,
         });
 
         switch (message.type) {
-          case "paddle":
-            dispatch(updateOpponentPaddle(message.data));
+          case "dc_ready": {
+            dispatch(
+              addSystemMessage({
+                text: "Datachannel handshake complete.",
+                timestamp: Date.now(),
+              }),
+            );
             break;
-          case "ready":
-            dispatch(setOpponentReady(message.data));
+          }
+          case "paddleMove": {
+            if (!this.isHost) break;
+            const paddleMoveMessage = message as PaddleMoveMessage;
+            dispatch(updateOpponentPaddle(paddleMoveMessage.payload));
             break;
+          }
+          case "gameState": {
+            if (this.isHost) break;
+            const gameStateMessage = message as HostGameStateMessage;
+            const { payload } = gameStateMessage;
+            dispatch(updateBall(payload.ball));
+            dispatch(updateLeftPaddle(payload.leftPaddle.y));
+            dispatch(updateRightPaddle(payload.rightPaddle.y));
+            dispatch(
+              updateScore({ player: "left", points: payload.score.left }),
+            );
+            dispatch(
+              updateScore({ player: "right", points: payload.score.right }),
+            );
+            dispatch(setGameStatus(payload.status));
+            dispatch(setCountdown(payload.countdown));
+            dispatch(setOpponentReady(payload.opponentReady));
+            break;
+          }
           default:
             logger.warn("[RTCDataChannel] Unknown message type:", {
-              messageType: message.type,
+              messageType: (message as any).type,
             });
         }
       } catch (error) {
@@ -260,6 +298,24 @@ export class WebRTCService {
         });
       }
     };
+  }
+
+  public sendDataChannelMessage(message: DataChannelMessage): void {
+    if (!this.dataChannel || this.dataChannel.readyState !== "open") {
+      logger.debug("[RTCDataChannel] Channel not open, dropping message", {
+        messageType: message.type,
+      });
+      return;
+    }
+
+    try {
+      this.dataChannel.send(JSON.stringify(message));
+    } catch (error) {
+      logger.error("[RTCDataChannel] Failed to send message:", {} as Error, {
+        error,
+        messageType: message.type,
+      });
+    }
   }
 
   private async createAndSendOffer(): Promise<void> {
@@ -383,36 +439,6 @@ export class WebRTCService {
     }
   }
 
-  public sendReadyState(isReady: boolean): void {
-    if (!this.dataChannel) {
-      logger.info("[RTCDataChannel] Channel not ready, queueing ready state");
-      this._queuedReadyState = isReady;
-      return;
-    }
-
-    if (this.dataChannel.readyState !== "open") {
-      logger.info("[RTCDataChannel] Channel not open, queueing ready state");
-      this._queuedReadyState = isReady;
-      return;
-    }
-
-    try {
-      const message = JSON.stringify({
-        type: "ready",
-        data: isReady,
-      });
-      this.dataChannel.send(message);
-      logger.info("[RTCDataChannel] Sent ready state:", { isReady });
-    } catch (error) {
-      logger.error(
-        "[RTCDataChannel] Failed to send ready state:",
-        {} as Error,
-        { error },
-      );
-      throw error;
-    }
-  }
-
   public cleanup(): void {
     logger.info("[RTCPeerConnection] Cleaning up...");
     if (this.dataChannel) {
@@ -424,7 +450,6 @@ export class WebRTCService {
       this.peerConnection = null;
     }
     this.offerRetryCount = 0;
-    this._queuedReadyState = null;
   }
 }
 
