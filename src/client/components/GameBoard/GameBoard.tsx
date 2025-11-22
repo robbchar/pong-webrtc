@@ -8,6 +8,8 @@ import { useBallMovement } from "@/hooks/useBallMovement";
 import { useCountdown } from "@/hooks/useCountdown";
 import { useHostGameStateBroadcast } from "@/hooks/useHostGameStateBroadcast";
 import useDeviceOrientation from "@/hooks/useDeviceOrientation";
+import { webRTCService } from "@/services/webRTCService";
+import type { ReadyStatusMessage } from "@/types/dataChannelTypes";
 import styles from "./GameBoard.module.css";
 import { logger } from "@/utils/logger";
 
@@ -46,7 +48,12 @@ const GameBoard: React.FC = () => {
     try {
       const newReadyState = !isReady;
       dispatch(setReady(newReadyState));
-      // TODO: when gameplay networking resumes, send ready state over WebRTC datachannel.
+      if (!(isHost ?? false) && dataChannelStatus === "open") {
+        webRTCService.sendDataChannelMessage({
+          type: "readyStatus",
+          payload: { isReady: newReadyState },
+        } satisfies ReadyStatusMessage);
+      }
     } catch (error) {
       logger.error("[GameBoard] Failed to update ready state:", {} as Error, {
         error,
@@ -115,6 +122,11 @@ const GameBoard: React.FC = () => {
           <div className={styles.message} data-testid="countdown">
             {countdown}
           </div>
+          {isReady && (
+            <button className={styles.readyButton} onClick={handleReadyClick}>
+              Cancel ready
+            </button>
+          )}
         </div>
       );
     }
@@ -125,11 +137,15 @@ const GameBoard: React.FC = () => {
         <div className={styles.message}>{message}</div>
         {peerStatus === "connected" &&
           dataChannelStatus === "open" &&
-          !isReady && (
+          (!isReady ? (
             <button className={styles.readyButton} onClick={handleReadyClick}>
               Ready
             </button>
-          )}
+          ) : (
+            <button className={styles.readyButton} onClick={handleReadyClick}>
+              Cancel ready
+            </button>
+          ))}
       </div>
     );
   };

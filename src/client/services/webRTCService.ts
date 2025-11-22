@@ -25,6 +25,7 @@ import type {
   DcReadyMessage,
   HostGameStateMessage,
   PaddleMoveMessage,
+  ReadyStatusMessage,
 } from "@/types/dataChannelTypes";
 
 // Configuration for STUN servers (Google's public servers)
@@ -269,6 +270,12 @@ export class WebRTCService {
             dispatch(updateOpponentPaddle(paddleMoveMessage.payload));
             break;
           }
+          case "readyStatus": {
+            if (!this.isHost) break;
+            const readyStatusMessage = message as ReadyStatusMessage;
+            dispatch(setOpponentReady(readyStatusMessage.payload.isReady));
+            break;
+          }
           case "gameState": {
             if (this.isHost) break;
             const gameStateMessage = message as HostGameStateMessage;
@@ -284,7 +291,8 @@ export class WebRTCService {
             );
             dispatch(setGameStatus(payload.status));
             dispatch(setCountdown(payload.countdown));
-            dispatch(setOpponentReady(payload.opponentReady));
+            dispatch(setReady(payload.opponentReady));
+            dispatch(setOpponentReady(payload.isReady));
             break;
           }
           default:
