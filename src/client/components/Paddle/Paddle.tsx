@@ -26,7 +26,7 @@ const Paddle: React.FC<PaddleProps> = ({ side, position }) => {
 
   return (
     <div
-      className={`${styles.paddle} ${styles[side]}`}
+      className={`${styles.paddle} ${styles[side]} ${isLocalPlayer ? styles.localPaddle : ""}`}
       style={{ top: `${clampedPosition}%` }}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
