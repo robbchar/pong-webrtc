@@ -91,10 +91,14 @@ export const useBallPhysics = (config: BallPhysicsConfig = defaultConfig) => {
         const paddleCenterY = leftPaddleTop + PADDLE_HEIGHT / 2;
         const hitFraction = (newBall.y - paddleCenterY) / (PADDLE_HEIGHT / 2);
         const clampedHitFraction = Math.max(-1, Math.min(1, hitFraction));
-        const bounceAngle = clampedHitFraction * config.maxAngle;
+        const baseReflectedAngle = Math.atan2(ball.velocityY, -ball.velocityX);
+        const bounceAngle =
+          baseReflectedAngle + clampedHitFraction * config.maxAngle;
 
         newBall.velocityX =
-          Math.cos(bounceAngle) * speedMagnitude * config.paddleBounce;
+          Math.abs(Math.cos(bounceAngle)) *
+          speedMagnitude *
+          config.paddleBounce;
         newBall.velocityY =
           Math.sin(bounceAngle) * speedMagnitude * config.paddleBounce;
         newBall.x = leftPaddleXMax + ballRadius;
@@ -111,10 +115,14 @@ export const useBallPhysics = (config: BallPhysicsConfig = defaultConfig) => {
         const paddleCenterY = rightPaddleTop + PADDLE_HEIGHT / 2;
         const hitFraction = (newBall.y - paddleCenterY) / (PADDLE_HEIGHT / 2);
         const clampedHitFraction = Math.max(-1, Math.min(1, hitFraction));
-        const bounceAngle = clampedHitFraction * config.maxAngle;
+        const baseReflectedAngle = Math.atan2(ball.velocityY, -ball.velocityX);
+        const bounceAngle =
+          baseReflectedAngle + clampedHitFraction * config.maxAngle;
 
         newBall.velocityX =
-          -Math.cos(bounceAngle) * speedMagnitude * config.paddleBounce;
+          -Math.abs(Math.cos(bounceAngle)) *
+          speedMagnitude *
+          config.paddleBounce;
         newBall.velocityY =
           Math.sin(bounceAngle) * speedMagnitude * config.paddleBounce;
         newBall.x = rightPaddleXMin - ballRadius;
