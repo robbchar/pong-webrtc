@@ -139,6 +139,11 @@ const GameBoard: React.FC = () => {
           <div className={styles.message} data-testid="countdown">
             {countdown}
           </div>
+          {isReady && (
+            <button className={styles.readyButton} onClick={handleReadyClick}>
+              Cancel ready
+            </button>
+          )}
         </div>
       );
     }
@@ -149,11 +154,15 @@ const GameBoard: React.FC = () => {
         <div className={styles.message}>{message}</div>
         {peerStatus === "connected" &&
           dataChannelStatus === "open" &&
-          !isReady && (
+          (!isReady ? (
             <button className={styles.readyButton} onClick={handleReadyClick}>
               Ready
             </button>
-          )}
+          ) : (
+            <button className={styles.readyButton} onClick={handleReadyClick}>
+              Cancel ready
+            </button>
+          ))}
       </div>
     );
   };
