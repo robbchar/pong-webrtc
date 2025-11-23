@@ -34,6 +34,17 @@ vi.mock("@/hooks/useInterpolatedGameState", () => ({
   })),
 }));
 
+vi.mock("@/hooks/useDebugToggle", () => ({
+  useDebugToggle: vi.fn(() => false),
+}));
+
+vi.mock("../DebugOverlay/DebugOverlay", () => ({
+  default: () => {
+    const React = require("react");
+    return React.createElement("div", { "data-testid": "debug-overlay" });
+  },
+}));
+
 vi.mock("@/hooks/useDeviceOrientation", () => ({
   __esModule: true,
   default: vi.fn(() => ({
@@ -74,6 +85,7 @@ describe("GameBoard", () => {
       error: null,
       selfStartIntent: false,
       opponentStartIntent: false,
+      debugOverlayEnabled: false,
     };
 
     return configureStore({
@@ -224,6 +236,13 @@ describe("GameBoard", () => {
     const scores = screen.getAllByText(/[0-9]/);
     expect(scores[0]).toHaveTextContent("5");
     expect(scores[1]).toHaveTextContent("3");
+  });
+
+  it("renders debug overlay when enabled", async () => {
+    const { useDebugToggle } = await import("@/hooks/useDebugToggle");
+    vi.mocked(useDebugToggle).mockReturnValue(true);
+    renderWithStore(createMockStore());
+    expect(screen.getByTestId("debug-overlay")).toBeInTheDocument();
   });
 
   it("should show game over and winner when score reaches 10", () => {

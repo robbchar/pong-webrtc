@@ -56,6 +56,7 @@ const createTestStore = () => {
         error: null,
         selfStartIntent: false,
         opponentStartIntent: false,
+        debugOverlayEnabled: false,
       },
       chat: {
         self: { clientId: "test-client", name: "Player-test" },

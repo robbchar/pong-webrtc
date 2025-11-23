@@ -1,0 +1,42 @@
+.debugOverlay {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+  padding: 8px 10px;
+  color: white;
+  font-size: 12px;
+  line-height: 1.4;
+  z-index: 3;
+  pointer-events: none;
+  min-width: 160px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.label {
+  opacity: 0.8;
+}
+
+.value {
+  font-variant-numeric: tabular-nums;
+}
+
+.qualityGood {
+  color: #4caf50;
+}
+
+.qualityOk {
+  color: #ffb300;
+}
+
+.qualityPoor {
+  color: #f44336;
+}
