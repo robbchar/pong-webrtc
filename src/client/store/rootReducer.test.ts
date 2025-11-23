@@ -40,6 +40,7 @@ describe("rootReducer", () => {
       signalingStatus: SignalingStatus.CLOSED,
       peerStatus: "idle",
       dataChannelStatus: "closed",
+      debugOverlayEnabled: false,
       peerId: null,
       isHost: null,
       playerSide: null,

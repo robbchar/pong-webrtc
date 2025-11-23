@@ -251,9 +251,11 @@ const GameBoard: React.FC = () => {
 
       {debugOverlayEnabled && <DebugOverlay />}
 
-      <div className={styles.roleBadge} data-testid="role-badge">
-        {isHost === true ? "Host" : isHost === false ? "Guest" : "Unknown"}
-      </div>
+      {debugOverlayEnabled && (
+        <div className={styles.roleBadge} data-testid="role-badge">
+          {isHost === true ? "Host" : isHost === false ? "Guest" : "Unknown"}
+        </div>
+      )}
     </div>
   );
 };
