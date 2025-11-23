@@ -2,7 +2,11 @@ import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { webRTCService } from "@/services/webRTCService";
-import { setCountdown, setGameStatus } from "@/store/slices/gameSlice";
+import {
+  setCountdown,
+  setGameStatus,
+  setLastSnapshotTimestamp,
+} from "@/store/slices/gameSlice";
 import type { HostGameStateMessage } from "@/types/dataChannelTypes";
 
 const BROADCAST_INTERVAL_MS = 50;
@@ -56,10 +60,11 @@ export const useHostGameStateBroadcast = (isHost: boolean) => {
         timestamp: Date.now(),
       };
       webRTCService.sendDataChannelMessage(message);
+      dispatch(setLastSnapshotTimestamp(message.timestamp));
     }, BROADCAST_INTERVAL_MS);
 
     return () => {
       clearInterval(intervalId);
     };
-  }, [isHost, dataChannelStatus]);
+  }, [isHost, dataChannelStatus, dispatch]);
 };

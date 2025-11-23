@@ -33,6 +33,7 @@ export function useConnectionMetrics(): ConnectionMetrics {
 
   const previousSnapshotTimestampRef = useRef<number | null>(null);
   const recentSnapshotIntervalsRef = useRef<number[]>([]);
+  const lastSnapshotTimestampRef = useRef<number | null>(null);
 
   const [snapshotRateHz, setSnapshotRateHz] = useState<number | null>(null);
   const [averageSnapshotIntervalMs, setAverageSnapshotIntervalMs] = useState<
@@ -48,9 +49,7 @@ export function useConnectionMetrics(): ConnectionMetrics {
   );
 
   useEffect(() => {
-    if (isHost === true) {
-      return;
-    }
+    lastSnapshotTimestampRef.current = lastSnapshotTimestampMs;
 
     if (lastSnapshotTimestampMs === null) {
       return;
@@ -82,11 +81,32 @@ export function useConnectionMetrics(): ConnectionMetrics {
   }, [isHost, lastSnapshotTimestampMs]);
 
   useEffect(() => {
+    const isConnected =
+      peerStatus === "connected" && dataChannelStatus === "open";
+
+    if (isConnected) {
+      return;
+    }
+
+    previousSnapshotTimestampRef.current = null;
+    recentSnapshotIntervalsRef.current = [];
+
+    setSnapshotRateHz(null);
+    setAverageSnapshotIntervalMs(null);
+    setSnapshotStalenessMs(null);
+    setInputSendRateHz(null);
+    setLastInputSentAtMs(null);
+    guestInputSentAtMs.length = 0;
+  }, [peerStatus, dataChannelStatus]);
+
+  useEffect(() => {
     const intervalId = window.setInterval(() => {
-      if (lastSnapshotTimestampMs === null) {
+      const latestSnapshotTimestampMs = lastSnapshotTimestampRef.current;
+
+      if (latestSnapshotTimestampMs === null) {
         setSnapshotStalenessMs(null);
       } else {
-        setSnapshotStalenessMs(Date.now() - lastSnapshotTimestampMs);
+        setSnapshotStalenessMs(Date.now() - latestSnapshotTimestampMs);
       }
 
       if (guestInputSentAtMs.length === 0) {
@@ -106,14 +126,11 @@ export function useConnectionMetrics(): ConnectionMetrics {
     }, 500);
 
     return () => clearInterval(intervalId);
-  }, [lastSnapshotTimestampMs]);
+  }, []);
 
   const qualityLabel = useMemo<ConnectionMetrics["qualityLabel"]>(() => {
-    if (isHost === true) {
-      if (peerStatus !== "connected" || dataChannelStatus !== "open") {
-        return "Unknown";
-      }
-      return "Good";
+    if (peerStatus !== "connected" || dataChannelStatus !== "open") {
+      return "Unknown";
     }
 
     if (snapshotStalenessMs === null || averageSnapshotIntervalMs === null) {
