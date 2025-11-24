@@ -70,9 +70,6 @@ const chatSlice = createSlice({
         isSystem: true,
       });
     },
-    clearChat: (state) => {
-      state.messages = [];
-    },
   },
 });
 
@@ -82,7 +79,6 @@ export const {
   chatMessageReceived,
   chatMessageSent,
   addSystemMessage,
-  clearChat,
 } = chatSlice.actions;
 
 export default chatSlice.reducer;
