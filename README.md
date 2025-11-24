@@ -78,7 +78,9 @@ Client build output goes to `dist/client`, server build to `dist/server`.
 - `npm test`: run tests once
 - `npm run test:watch`: watch mode
 - `npm run test:coverage`: coverage run
-- `npm run lint`: typecheck client + server
+- `npm run lint`: typecheck client + server (includes unused locals/params checks)
+- `npm run knip:report`: report unused files/exports (TypeScript-aware)
+- `npm run depcheck:report`: report unused npm dependencies
 
 ## How to play locally
 

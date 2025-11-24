@@ -2,11 +2,6 @@
   "$schema": "https://unpkg.com/knip@latest/schema.json",
   "project": ["src/client/**/*.{ts,tsx}", "src/server/**/*.ts"],
   "entry": ["src/client/main.tsx", "src/server/server.ts"],
-  "ignore": [
-    "archive/**",
-    "dist/**",
-    "vitest.config.ts",
-    "src/client/setupTests.ts"
-  ],
+  "ignore": ["dist/**", "vitest.config.ts", "src/client/setupTests.ts"],
   "ignoreDependencies": ["@testing-library/jest-dom"]
 }
