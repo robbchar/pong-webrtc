@@ -30,8 +30,10 @@ describe("useConnectionMetrics", () => {
   });
 
   const connectAsHost = () => {
-    store.dispatch(setPeerConnected({ peerId: "peer-1", isHost: true }));
-    store.dispatch(setDataChannelStatus("open"));
+    act(() => {
+      store.dispatch(setPeerConnected({ peerId: "peer-1", isHost: true }));
+      store.dispatch(setDataChannelStatus("open"));
+    });
   };
 
   it("computes snapshot rate and average interval for host from sent timestamps", () => {

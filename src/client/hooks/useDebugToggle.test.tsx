@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook } from "@testing-library/react";
+import { renderHook, act } from "@testing-library/react";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import rootReducer from "@/store/rootReducer";
@@ -27,7 +27,9 @@ describe("useDebugToggle", () => {
 
     expect(store.getState().connection.debugOverlayEnabled).toBe(false);
 
-    window.dispatchEvent(new KeyboardEvent("keydown", { key: "?" }));
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "?" }));
+    });
 
     expect(store.getState().connection.debugOverlayEnabled).toBe(true);
   });
@@ -39,7 +41,9 @@ describe("useDebugToggle", () => {
     document.body.appendChild(input);
     input.focus();
 
-    input.dispatchEvent(new KeyboardEvent("keydown", { key: "?" }));
+    act(() => {
+      input.dispatchEvent(new KeyboardEvent("keydown", { key: "?" }));
+    });
 
     expect(store.getState().connection.debugOverlayEnabled).toBe(false);
     document.body.removeChild(input);
