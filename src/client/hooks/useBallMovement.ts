@@ -18,7 +18,7 @@ export const useBallMovement = ({ isHost }: UseBallMovementProps) => {
   const { ball, leftPaddle, rightPaddle, score, status } = useSelector(
     (state: RootState) => state.game,
   );
-  const animationFrameRef = useRef<number>();
+  const animationFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!isHost) return;

@@ -6,14 +6,16 @@ import rootReducer from "@/store/rootReducer";
 import { useDebugToggle } from "./useDebugToggle";
 
 describe("useDebugToggle", () => {
-  let store: ReturnType<typeof configureStore>;
+  const createStore = () => configureStore({ reducer: rootReducer });
+  type TestStore = ReturnType<typeof createStore>;
+  let store: TestStore;
 
   const Wrapper = ({ children }: { children: React.ReactNode }) => (
     <Provider store={store}>{children}</Provider>
   );
 
   beforeEach(() => {
-    store = configureStore({ reducer: rootReducer });
+    store = createStore();
   });
 
   afterEach(() => {
