@@ -20,7 +20,8 @@ interface SignalingMessage {
     | "ice-candidate"
     | "ready_for_offer"
     | "chatMessage"
-    | "start_intent";
+    | "start_intent"
+    | "back_to_lobby";
   payload?: any;
   senderId?: string;
   message?: string;
@@ -32,18 +33,62 @@ const wss = new WebSocketServer({ server });
 
 const PORT = process.env.PORT || 8080;
 
-// setInterval(() => {
-//     console.log('Active connections status:');
-//     clients.forEach((ws, id) => {
-//         console.log(`Client ${id}: readyState=${ws.readyState}`);
-//     });
-// }, 5000);
-
 // Track clients and games
 const clients = new Map<string, WebSocket>(); // Use base WebSocket type
-const gamesToClients = new Map<string, Array<string>>(); // Map<gameId, Array<clientId>> (the array should be the clients in the game, first is the host possible second is the opponent)
+const gamesToClients = new Map<string, Array<string>>(); // Map<gameId, Array<clientId>> (first is host, second is opponent)
 const clientsToGames = new Map<string, string>(); // Map<clientId, gameId>
-let waitingClientId: string | null = null; // Track the ID of a client waiting for a pair
+const waitingQueue: string[] = []; // FIFO queue of clients waiting for an opponent (each has a gameId already)
+
+function removeFromWaitingQueue(clientId: string): void {
+  const idx = waitingQueue.indexOf(clientId);
+  if (idx >= 0) waitingQueue.splice(idx, 1);
+}
+
+function pairHostWithGuest(hostId: string, guestId: string): void {
+  const hostWs = clients.get(hostId);
+  const guestWs = clients.get(guestId);
+  if (!hostWs || !guestWs) return;
+  if (
+    hostWs.readyState !== WebSocket.OPEN ||
+    guestWs.readyState !== WebSocket.OPEN
+  ) {
+    return;
+  }
+
+  let hostGameId = clientsToGames.get(hostId);
+  if (!hostGameId) {
+    hostGameId = uuidv4();
+    clientsToGames.set(hostId, hostGameId);
+    gamesToClients.set(hostGameId, [hostId]);
+    hostWs.send(
+      JSON.stringify({
+        type: "host_assigned",
+        payload: { gameId: hostGameId },
+      }),
+    );
+  }
+
+  const guestOldGameId = clientsToGames.get(guestId);
+  if (guestOldGameId && guestOldGameId !== hostGameId) {
+    gamesToClients.delete(guestOldGameId);
+  }
+
+  gamesToClients.set(hostGameId, [hostId, guestId]);
+  clientsToGames.set(guestId, hostGameId);
+
+  guestWs.send(
+    JSON.stringify({
+      type: "paired",
+      payload: { opponentId: hostId, isHost: false },
+    }),
+  );
+  hostWs.send(
+    JSON.stringify({
+      type: "paired",
+      payload: { opponentId: guestId, isHost: true },
+    }),
+  );
+}
 
 // Helper function to get local network IP
 function getLocalNetworkIp(): string | null {
@@ -89,99 +134,30 @@ wss.on("connection", (ws: WebSocket, req: IncomingMessage) => {
   clients.set(clientId, ws);
   console.log(`Client connected: ${clientId}, IP: ${req.socket.remoteAddress}`);
 
-  if (waitingClientId && waitingClientId === clientId) {
+  // If client was already waiting (e.g., refreshed tab), just re-send host assignment.
+  if (waitingQueue.includes(clientId)) {
     console.log(`Client ${clientId} is already waiting for an opponent.`);
     const gameId = clientsToGames.get(clientId);
-    if (!gameId) {
-      console.error(`Game ID not found for client ${clientId}`);
-      ws.send(
-        JSON.stringify({
-          type: "error",
-          payload: { message: "Game ID not found" },
-        }),
-      );
+    if (gameId) {
+      ws.send(JSON.stringify({ type: "host_assigned", payload: { gameId } }));
+      outputServerStatus();
       return;
     }
-
-    ws.send(JSON.stringify({ type: "host_assigned", payload: { gameId } }));
-    return;
+    // If we somehow lost the gameId, drop them from queue and proceed normally.
+    removeFromWaitingQueue(clientId);
   }
 
-  // Handle pairing
-  if (waitingClientId) {
-    console.log(`Found waiting client, pairing opponents.`);
-    const opponentId = waitingClientId;
-    const opponentWs = clients.get(opponentId);
-
-    // check if the opponent is connected to start the pairing process
-    if (opponentWs && opponentWs.readyState === WebSocket.OPEN) {
-      const gameId = clientsToGames.get(opponentId);
-      if (!gameId) {
-        ws.send(
-          JSON.stringify({
-            type: "error",
-            payload: { message: "Game ID not found" },
-          }),
-        );
-        opponentWs.send(
-          JSON.stringify({
-            type: "error",
-            payload: { message: "Game ID not found" },
-          }),
-        );
-        console.error(`Game ID not found for opponent ${opponentId}`);
-        return;
-      }
-      console.log(`Pairing clients: ${clientId} and ${opponentId}`);
-      gamesToClients.set(gameId, [opponentId, clientId]);
-      clientsToGames.set(clientId, gameId);
-
-      waitingClientId = null; // Clear the waiting spot so the next user would start a new game
-
-      // Before sending paired messages
-      // console.log('About to send paired messages. Connection states:', {
-      //   newClient: { id: clientId, readyState: ws.readyState },
-      //   opponent: { id: opponentId, readyState: opponentWs.readyState }
-      // });
-
-      // Notify both clients they are paired
-      ws.send(
-        JSON.stringify({
-          type: "paired",
-          payload: { opponentId, isHost: false },
-        }),
-      );
-      opponentWs.send(
-        JSON.stringify({
-          type: "paired",
-          payload: { opponentId: clientId, isHost: true },
-        }),
-      );
-      // console.log('Paired messages sent. Connection states:', {
-      //   newClient: { id: clientId, readyState: ws.readyState },
-      //   opponent: { id: opponentId, readyState: opponentWs.readyState }
-      // });
-    } else {
-      // this could cause problems...
-      console.log(
-        `Waiting client ${opponentId} disconnected before pairing could complete.`,
-      );
-      waitingClientId = clientId; // This new client waits
-      if (opponentId) {
-        clients.delete(opponentId); // Clean up disconnected client
-      }
-      console.log(`Client ${clientId} is now waiting.`);
-    }
+  if (waitingQueue.length > 0) {
+    const hostId = waitingQueue.shift()!;
+    console.log(`Found waiting client ${hostId}, pairing opponents.`);
+    pairHostWithGuest(hostId, clientId);
   } else {
-    waitingClientId = clientId;
     console.log(`Client ${clientId} is waiting for an opponent.`);
-
-    // create a game and let the host wait
-    // Send host assignment messages
-    const gameId = uuidv4(); // Generate a unique game ID
+    const gameId = uuidv4();
     ws.send(JSON.stringify({ type: "host_assigned", payload: { gameId } }));
     gamesToClients.set(gameId, [clientId]);
     clientsToGames.set(clientId, gameId);
+    waitingQueue.push(clientId);
   }
 
   outputServerStatus();
@@ -370,6 +346,29 @@ function handleMessage(senderWs: WebSocket, data: SignalingMessage) {
       }
       break;
 
+    case "back_to_lobby":
+      if (opponentId) {
+        const opponentWs = clients.get(opponentId);
+        if (opponentWs && opponentWs.readyState === WebSocket.OPEN) {
+          console.log(
+            `Relaying back_to_lobby from ${senderId} to ${opponentId}`,
+          );
+          opponentWs.send(JSON.stringify({ ...data, senderId }));
+        } else {
+          senderWs.send(
+            JSON.stringify({ type: "error", payload: "Opponent unavailable" }),
+          );
+        }
+      } else {
+        senderWs.send(
+          JSON.stringify({
+            type: "error",
+            payload: "You are not paired with anyone",
+          }),
+        );
+      }
+      break;
+
     case "ping":
       console.log(JSON.stringify(data));
       senderWs.send(JSON.stringify({ type: "pong" }));
@@ -396,10 +395,10 @@ function handleDisconnect(ws: WebSocket) {
     return; // Already handled or invalid state
   }
 
-  if (waitingClientId === disconnectedClientId) {
-    waitingClientId = null;
+  if (waitingQueue.includes(disconnectedClientId)) {
+    removeFromWaitingQueue(disconnectedClientId);
     console.log(
-      `Client ${disconnectedClientId} was waiting, cleared waiting spot.`,
+      `Client ${disconnectedClientId} was waiting, removed from waiting queue.`,
     );
   }
 
@@ -411,30 +410,32 @@ function handleDisconnect(ws: WebSocket) {
       if (players.length === 1) {
         gamesToClients.delete(gameId); // remove the game the host left
       } else {
-        gamesToClients.set(
-          gameId,
-          players.filter((player) => player !== disconnectedClientId),
-        ); // remove the disconnected client from the game
-        const opponentId = players[0];
-        if (opponentId) {
-          const opponentWs = clients.get(opponentId);
-          if (opponentWs && opponentWs.readyState === WebSocket.OPEN) {
-            console.log(`Notifying opponent ${opponentId} about disconnect.`);
-            opponentWs.send(JSON.stringify({ type: "opponentLeft" }));
-            // Make opponent wait again, make sure they know they are the host
-            if (!waitingClientId) {
-              opponentWs.send(
-                JSON.stringify({ type: "host_assigned", payload: { gameId } }),
-              );
+        const remainingId = players.find(
+          (player) => player !== disconnectedClientId,
+        );
+        if (!remainingId) {
+          gamesToClients.delete(gameId);
+        } else {
+          gamesToClients.set(gameId, [remainingId]);
+          const remainingWs = clients.get(remainingId);
+          if (remainingWs && remainingWs.readyState === WebSocket.OPEN) {
+            console.log(
+              `Notifying opponent ${remainingId} about disconnect and returning to waiting.`,
+            );
+            remainingWs.send(JSON.stringify({ type: "opponentLeft" }));
+            remainingWs.send(
+              JSON.stringify({ type: "host_assigned", payload: { gameId } }),
+            );
+          }
 
-              waitingClientId = opponentId;
-              console.log(`Opponent ${opponentId} is now waiting.`);
-            } else {
-              // need to do logic to re-pair with current waiting client, but reconnectingdoes the same thing... not as clean though
-              console.log(
-                `Another client ${waitingClientId} is already waiting. Opponent ${opponentId} needs to reconnect.`,
-              );
-            }
+          // remaining becomes waiting host; if someone else is already waiting, pair immediately.
+          if (waitingQueue.length > 0) {
+            const waitingHostId = waitingQueue.shift()!;
+            // Pair the remaining host with the waiting host as guest (reuse remaining's game).
+            pairHostWithGuest(remainingId, waitingHostId);
+          } else {
+            waitingQueue.push(remainingId);
+            console.log(`Opponent ${remainingId} is now waiting.`);
           }
         }
       }
@@ -452,7 +453,7 @@ function handleDisconnect(ws: WebSocket) {
 
 const outputServerStatus = () => {
   console.log(
-    `Current clients: ${clients.size}, Current number of games: ${gamesToClients.size}, Waiting: ${waitingClientId ? 1 : 0}`,
+    `Current clients: ${clients.size}, Current number of games: ${gamesToClients.size}, Waiting: ${waitingQueue.length}`,
   );
 };
 

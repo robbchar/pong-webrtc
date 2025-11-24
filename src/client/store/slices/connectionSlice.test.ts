@@ -24,6 +24,7 @@ const initialState: ConnectionState = {
   selfStartIntent: false,
   opponentStartIntent: false,
   debugOverlayEnabled: false,
+  returnedToLobby: false,
 };
 
 describe("connectionSlice", () => {
