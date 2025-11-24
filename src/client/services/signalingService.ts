@@ -332,6 +332,7 @@ class SignalingService {
         );
 
         this.opponentId = message.payload.opponentId;
+        this.isHost = Boolean(message.payload.isHost);
         this.selfStartIntent = false;
         this.opponentStartIntent = false;
         this.hasStartedWebRTCOnce = false;
