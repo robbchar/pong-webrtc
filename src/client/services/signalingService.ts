@@ -290,7 +290,19 @@ class SignalingService {
 
   public sendBackToLobby(): void {
     if (!this.dispatch || !this.opponentId) return;
+    // Reset local rematch gating so either side can start again from lobby.
+    this.resetStartGates();
     this.sendMessage("back_to_lobby", { to: this.opponentId });
+  }
+
+  private resetStartGates(): void {
+    this.selfStartIntent = false;
+    this.opponentStartIntent = false;
+    this.hasStartedWebRTCOnce = false;
+    if (this.dispatch) {
+      this.dispatch(setSelfStartIntent(false));
+      this.dispatch(setOpponentStartIntent(false));
+    }
   }
 
   // Handle incoming messages
@@ -454,6 +466,7 @@ class SignalingService {
       case "back_to_lobby":
         webRTCService.cleanup();
         this.dispatch(setDataChannelStatus("closed"));
+        this.resetStartGates();
         this.dispatch(markReturnedToLobby());
         this.dispatch(resetGame());
         this.dispatch(
@@ -468,6 +481,7 @@ class SignalingService {
         webRTCService.cleanup();
         this.dispatch(setDataChannelStatus("closed"));
         this.dispatch(setPeerDisconnected());
+        this.resetStartGates();
         this.dispatch(markReturnedToLobby());
         this.dispatch(resetGame());
         this.dispatch(clearGameId());
@@ -498,6 +512,7 @@ class SignalingService {
           if (errorMessage.includes("Game ID not found")) {
             webRTCService.cleanup();
             this.dispatch(setDataChannelStatus("closed"));
+            this.resetStartGates();
             this.dispatch(markReturnedToLobby());
             this.dispatch(resetGame());
             this.dispatch(clearGameId());
