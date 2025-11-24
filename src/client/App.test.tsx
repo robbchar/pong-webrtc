@@ -50,7 +50,7 @@ const createTestStore = () => {
         peerStatus: "connected" as const,
         peerId: "test-peer",
         isHost: true,
-        playerSide: "left",
+        playerSide: "left" as const,
         gameId: "test-game",
         dataChannelStatus: "closed" as const,
         error: null,

@@ -6,8 +6,6 @@ import gameReducer, { GameStatus } from "@/store/slices/gameSlice";
 import { useCountdown } from "./useCountdown";
 
 describe("useCountdown", () => {
-  let store: ReturnType<typeof configureStore>;
-
   const createMockStore = (
     initialState: Partial<{
       status: GameStatus;
@@ -44,11 +42,16 @@ describe("useCountdown", () => {
           },
           countdown: 5,
           isReady: false,
+          opponentReady: false,
+          lastSnapshotTimestampMs: null,
           ...initialState,
         },
       },
     });
   };
+
+  type MockStore = ReturnType<typeof createMockStore>;
+  let store: MockStore;
 
   beforeEach(() => {
     vi.useFakeTimers();
