@@ -1,7 +1,30 @@
 .game {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
   background-color: #1a1a1a;
+}
+
+.header {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 10;
+}
+
+.backButton {
+  background: transparent;
+  border: 1px solid #666;
+  color: #eee;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.backButton:hover:not(:disabled) {
+  border-color: #999;
+  background: rgba(255, 255, 255, 0.06);
 }

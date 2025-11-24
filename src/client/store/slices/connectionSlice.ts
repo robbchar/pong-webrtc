@@ -22,6 +22,7 @@ export interface ConnectionState {
   selfStartIntent: boolean;
   opponentStartIntent: boolean;
   debugOverlayEnabled: boolean;
+  returnedToLobby: boolean;
 }
 
 const derivePlayerSide = (isHost: boolean | null): PlayerSide | null => {
@@ -46,6 +47,7 @@ const initialState: ConnectionState = {
   selfStartIntent: false,
   opponentStartIntent: false,
   debugOverlayEnabled: false,
+  returnedToLobby: false,
 };
 
 const connectionSlice = createSlice({
@@ -79,6 +81,13 @@ const connectionSlice = createSlice({
       state.selfStartIntent = false;
       state.opponentStartIntent = false;
     },
+    setPeerConnectionLost: (state) => {
+      state.peerStatus = "disconnected";
+      state.dataChannelStatus = "closed";
+      state.selfStartIntent = false;
+      state.opponentStartIntent = false;
+      state.error = null;
+    },
     setPeerFailed: (state) => {
       state.peerStatus = "failed";
       state.dataChannelStatus = "closed";
@@ -89,6 +98,12 @@ const connectionSlice = createSlice({
     ) => {
       state.dataChannelStatus = action.payload;
     },
+    markReturnedToLobby: (state) => {
+      state.returnedToLobby = true;
+    },
+    clearReturnedToLobby: (state) => {
+      state.returnedToLobby = false;
+    },
     setError: (state, action: PayloadAction<string>) => {
       state.error = action.payload;
     },
@@ -97,6 +112,9 @@ const connectionSlice = createSlice({
     },
     setGameId: (state, action: PayloadAction<string>) => {
       state.gameId = action.payload;
+    },
+    clearGameId: (state) => {
+      state.gameId = null;
     },
     setIsHost: (state, action: PayloadAction<boolean>) => {
       state.isHost = action.payload;
@@ -120,11 +138,15 @@ export const {
   setPeerConnecting,
   setPeerConnected,
   setPeerDisconnected,
+  setPeerConnectionLost,
   setPeerFailed,
   setDataChannelStatus,
+  markReturnedToLobby,
+  clearReturnedToLobby,
   setError,
   clearError,
   setGameId,
+  clearGameId,
   setIsHost,
   setSelfStartIntent,
   setOpponentStartIntent,

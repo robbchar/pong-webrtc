@@ -1,12 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { RootState } from "@/store/store";
+import { clearReturnedToLobby } from "@/store/slices/connectionSlice";
 import { signalingService } from "@/services/signalingService";
 import styles from "./LobbyChat.module.css";
 
 const LobbyChat: React.FC = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const {
     signalingStatus,
     error,
@@ -15,6 +17,7 @@ const LobbyChat: React.FC = () => {
     dataChannelStatus,
     selfStartIntent,
     opponentStartIntent,
+    returnedToLobby,
   } = useSelector((state: RootState) => state.connection);
   const { self, room, messages } = useSelector(
     (state: RootState) => state.chat,
@@ -24,10 +27,10 @@ const LobbyChat: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (dataChannelStatus === "open") {
+    if (dataChannelStatus === "open" && !returnedToLobby) {
       navigate("/game");
     }
-  }, [dataChannelStatus, navigate]);
+  }, [dataChannelStatus, returnedToLobby, navigate]);
 
   useEffect(() => {
     const scrollTarget = messagesEndRef.current;
@@ -121,6 +124,17 @@ const LobbyChat: React.FC = () => {
             <span className={styles.startHint}>
               WebRTC connected. Ready for game.
             </span>
+            {returnedToLobby && (
+              <button
+                className={styles.startButton}
+                onClick={() => {
+                  dispatch(clearReturnedToLobby());
+                  navigate("/game");
+                }}
+              >
+                Return to game
+              </button>
+            )}
           </div>
         )}
       </header>

@@ -7,6 +7,11 @@ import {
   setIsHost,
   setOpponentStartIntent,
   setSelfStartIntent,
+  markReturnedToLobby,
+  clearReturnedToLobby,
+  clearGameId,
+  setDataChannelStatus,
+  setPeerDisconnected,
 } from "@/store/slices/connectionSlice";
 import {
   addSystemMessage,
@@ -15,6 +20,7 @@ import {
   setRoomGameId,
   setSelfIdentity,
 } from "@/store/slices/chatSlice";
+import { resetGame } from "@/store/slices/gameSlice";
 import { SignalingStatus } from "@/types/signalingTypes";
 import { webRTCService } from "./webRTCService"; // Import the new service
 import { logger } from "@/utils/logger";
@@ -270,6 +276,7 @@ class SignalingService {
     if (this.selfStartIntent) return;
 
     this.selfStartIntent = true;
+    this.dispatch(clearReturnedToLobby());
     this.dispatch(setSelfStartIntent(true));
     this.dispatch(
       addSystemMessage({
@@ -279,6 +286,11 @@ class SignalingService {
     );
     this.sendMessage("start_intent", { to: this.opponentId });
     this.maybeStartWebRTC();
+  }
+
+  public sendBackToLobby(): void {
+    if (!this.dispatch || !this.opponentId) return;
+    this.sendMessage("back_to_lobby", { to: this.opponentId });
   }
 
   // Handle incoming messages
@@ -439,12 +451,58 @@ class SignalingService {
         this.maybeStartWebRTC();
         break;
 
+      case "back_to_lobby":
+        webRTCService.cleanup();
+        this.dispatch(setDataChannelStatus("closed"));
+        this.dispatch(markReturnedToLobby());
+        this.dispatch(resetGame());
+        this.dispatch(
+          addSystemMessage({
+            text: `Player-${message.senderId?.slice(0, 4) ?? "unknown"} returned to the lobby.`,
+            timestamp: Date.now(),
+          }),
+        );
+        break;
+
+      case "opponentLeft":
+        webRTCService.cleanup();
+        this.dispatch(setDataChannelStatus("closed"));
+        this.dispatch(setPeerDisconnected());
+        this.dispatch(markReturnedToLobby());
+        this.dispatch(resetGame());
+        this.dispatch(clearGameId());
+        this.dispatch(setRoomGameId(null));
+        this.dispatch(
+          addSystemMessage({
+            text: "Opponent left the game. Returning to lobby.",
+            timestamp: Date.now(),
+          }),
+        );
+        break;
+
       case "error":
         logger.error("[WebSocket] Server error:", {} as Error, {
           message: message.payload,
         });
         if (this.dispatch) {
-          this.dispatch(setError(message.payload || "Unknown server error"));
+          const payload = message.payload;
+          const errorMessage =
+            typeof payload === "string"
+              ? payload
+              : payload?.message
+                ? String(payload.message)
+                : "Unknown server error";
+
+          this.dispatch(setError(errorMessage));
+
+          if (errorMessage.includes("Game ID not found")) {
+            webRTCService.cleanup();
+            this.dispatch(setDataChannelStatus("closed"));
+            this.dispatch(markReturnedToLobby());
+            this.dispatch(resetGame());
+            this.dispatch(clearGameId());
+            this.dispatch(setRoomGameId(null));
+          }
         }
         break;
 

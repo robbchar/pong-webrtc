@@ -43,6 +43,7 @@ describe("usePaddleMovement", () => {
       selfStartIntent: false,
       opponentStartIntent: false,
       debugOverlayEnabled: false,
+      returnedToLobby: false,
     };
 
     return configureStore({

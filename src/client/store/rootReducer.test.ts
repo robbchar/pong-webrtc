@@ -48,6 +48,7 @@ describe("rootReducer", () => {
       error: null,
       selfStartIntent: false,
       opponentStartIntent: false,
+      returnedToLobby: false,
     } as ConnectionState,
     chat: {
       self: null,

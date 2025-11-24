@@ -89,6 +89,7 @@ Client build output goes to `dist/client`, server build to `dist/server`.
 3. The first tab becomes **Host (left paddle)** and waits; the second tab joins as **Guest (right paddle)**.
 4. Click **Ready** in both tabs to start the countdown.
 5. Drag/touch your paddle to play.
+6. To stop a match without disconnecting, click **Back to lobby** in the game view. If you want to continue later, use **Return to game** in the lobby.
 
 ## Architecture overview
 

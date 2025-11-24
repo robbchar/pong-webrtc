@@ -86,6 +86,7 @@ describe("GameBoard", () => {
       selfStartIntent: false,
       opponentStartIntent: false,
       debugOverlayEnabled: false,
+      returnedToLobby: false,
     };
 
     return configureStore({

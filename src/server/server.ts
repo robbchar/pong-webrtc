@@ -20,7 +20,8 @@ interface SignalingMessage {
     | "ice-candidate"
     | "ready_for_offer"
     | "chatMessage"
-    | "start_intent";
+    | "start_intent"
+    | "back_to_lobby";
   payload?: any;
   senderId?: string;
   message?: string;
@@ -31,13 +32,6 @@ const server = createServer(app);
 const wss = new WebSocketServer({ server });
 
 const PORT = process.env.PORT || 8080;
-
-// setInterval(() => {
-//     console.log('Active connections status:');
-//     clients.forEach((ws, id) => {
-//         console.log(`Client ${id}: readyState=${ws.readyState}`);
-//     });
-// }, 5000);
 
 // Track clients and games
 const clients = new Map<string, WebSocket>(); // Use base WebSocket type
@@ -353,6 +347,29 @@ function handleMessage(senderWs: WebSocket, data: SignalingMessage) {
         if (opponentWs && opponentWs.readyState === WebSocket.OPEN) {
           console.log(
             `Relaying start_intent from ${senderId} to ${opponentId}`,
+          );
+          opponentWs.send(JSON.stringify({ ...data, senderId }));
+        } else {
+          senderWs.send(
+            JSON.stringify({ type: "error", payload: "Opponent unavailable" }),
+          );
+        }
+      } else {
+        senderWs.send(
+          JSON.stringify({
+            type: "error",
+            payload: "You are not paired with anyone",
+          }),
+        );
+      }
+      break;
+
+    case "back_to_lobby":
+      if (opponentId) {
+        const opponentWs = clients.get(opponentId);
+        if (opponentWs && opponentWs.readyState === WebSocket.OPEN) {
+          console.log(
+            `Relaying back_to_lobby from ${senderId} to ${opponentId}`,
           );
           opponentWs.send(JSON.stringify({ ...data, senderId }));
         } else {

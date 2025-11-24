@@ -17,7 +17,7 @@ import {
   setDataChannelStatus,
   setPeerConnecting,
   setPeerFailed,
-  setPeerDisconnected,
+  setPeerConnectionLost,
   setPeerConnected,
 } from "@/store/slices/connectionSlice";
 import { logger } from "@/utils/logger";
@@ -186,12 +186,12 @@ export class WebRTCService {
         case "disconnected":
         case "failed":
           logger.info("[RTCPeerConnection] Connection failed or disconnected");
-          this.dispatch(setPeerDisconnected());
+          this.dispatch(setPeerConnectionLost());
           this.dispatch(setDataChannelStatus("closed"));
           break;
         case "closed":
           logger.info("[RTCPeerConnection] Connection closed");
-          this.dispatch(setPeerDisconnected());
+          this.dispatch(setPeerConnectionLost());
           this.dispatch(setDataChannelStatus("closed"));
           this.cleanup();
           break;
